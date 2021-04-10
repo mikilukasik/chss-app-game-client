@@ -1,0 +1,38 @@
+.darker {
+  /*width: auto;*/
+  height: 0;
+  /*padding-bottom: 12.2%;*/
+  /*padding: 2% 1%;*/
+  background-color: silver;
+}
+
+.square {
+  /*width: auto;*/
+  height: 0;
+  background-color: white;
+  /*padding-bottom: 12.2%;*/
+  /*padding: 2% 1%;*/
+}
+
+.selected2 {
+  -webkit-animation: fadeIt 2s ease-in-out;
+  -moz-animation: fadeIt 2s ease-in-out;
+  -o-animation: fadeIt 2s ease-in-out;
+  animation: fadeIt 2s ease-in-out;
+}
+
+.selected {
+  background-color: rgba(255,153,0,0.75);
+/*  
+  background: rgba(255,153,0,0.75); 
+  background: -webkit-radial-gradient(circle, rgba(255,153,0,0.75), rgba(255,153,0,0.75), rgba(0,0,0,0)); 
+  background: -o-radial-gradient(circle,  rgba(255,153,0,0.75), rgba(255,153,0,0.75), rgba(0,0,0,0)); 
+  background: -moz-radial-gradient(circle, rgba(255,153,0,0.75), rgba(255,153,0,0.75), rgba(0,0,0,0)); 
+  background: radial-gradient(circle, rgba(255,153,0,0.75), rgba(255,153,0,0.75), rgba(0,0,0,0)); 
+  */
+  
+}
+
+body {
+  background-color: #cce;
+}

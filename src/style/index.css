@@ -18,3 +18,8 @@ html, body {
 #app {
 	height: 100%;
 }
+
+#main-content {
+	position: relative;
+	top: 60px;
+}
