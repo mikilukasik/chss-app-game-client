@@ -1,4 +1,4 @@
-# app-game-client
+# chss-app-game-client
 
 ## CLI Commands
 

@@ -1,6 +1,6 @@
 {
-  "name": "app-game-client",
-  "short_name": "app-game-client",
+  "name": "chss-app-game-client",
+  "short_name": "chss-app-game-client",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

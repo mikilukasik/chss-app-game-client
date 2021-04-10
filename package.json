@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "app-game-client",
+  "name": "chss-app-game-client",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
