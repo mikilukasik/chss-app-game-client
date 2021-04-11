@@ -6,9 +6,9 @@ COPY package.json package-lock.json ./
 # If you have native dependencies, you'll need extra tools
 # RUN apk add --no-cache make gcc g++ python3
 
-RUN npm ci
-# RUN npm ci --prod
-RUN npm run build
+# RUN npm ci
+RUN npm ci --prod
+# RUN npm run build
 
 # Then we copy over the modules from above onto a `slim` image
 FROM mhart/alpine-node:slim-12
