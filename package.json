@@ -29,6 +29,7 @@
     "sirv-cli": "1.0.3"
   },
   "dependencies": {
+    "chss-engine": "git+https://github.com/mikilukasik/chss-engine.git",
     "express": "^4.17.1",
     "preact": "^10.3.2",
     "preact-render-to-string": "^5.1.4",

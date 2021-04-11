@@ -3,14 +3,21 @@ import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { moveInTable, singleThreadAi } from '../../../engine/engine';
+import { moveInTable, singleThreadAi } from 'chss-engine/src/engine/engine';
+import { gameSocket } from '../../..';
 
 export const Board = () => {
   const { gameState, setGameState } = useContext(GameContext);
-  const { table } = gameState;
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
 
-  const cellSize = Math.min(window.innerHeight, window.innerWidth) / 10;
+  gameSocket.on('updateGame', (data, comms) => {
+    setGameState(data.cmdArgs); // TODO: we really need new payload from msg.. data is data
+    comms.send('OK');
+  });
+
+  if (!gameState) return;
+
+  const { table } = gameState;
 
   const whiteState = [];
   for (let i = 0; i < 8; i += 1) {
