@@ -1,7 +1,25 @@
 .gameContainer {
   display: grid;
-  grid-template-columns: 15vw 82vw;
+  grid-template-rows: 96vw auto;
   grid-gap: 1vw;
   padding: 0 1vw;
   height: 91vh;
+  grid-template-areas:
+    "board"
+    "sidebar";
+}
+
+@media (min-width: 700px) {
+  .gameContainer {
+  grid-template-rows: 73vh 18vh;
+  }
+}
+
+@media (min-width: 1000px) {
+  .gameContainer {
+    grid-template-rows: none;
+    grid-template-columns: 15vw 82vw;
+    grid-template-areas:
+      "sidebar board";
+  }
 }
