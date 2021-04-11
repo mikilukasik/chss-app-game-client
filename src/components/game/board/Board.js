@@ -2,15 +2,15 @@ import { h } from 'preact';
 import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
-import GameContext from '../../context/GameContext';
-import { moveInTable, singleThreadAi } from '../../engine/engine';
+import GameContext from '../../../context/GameContext';
+import { moveInTable, singleThreadAi } from '../../../engine/engine';
 
 export const Board = () => {
   const { gameState, setGameState } = useContext(GameContext);
   const { table } = gameState;
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
 
-  const cellSize = Math.min(window.innerHeight, window.innerWidth) / 9;
+  const cellSize = Math.min(window.innerHeight, window.innerWidth) / 10;
 
   const whiteState = [];
   for (let i = 0; i < 8; i += 1) {
@@ -59,7 +59,7 @@ export const Board = () => {
     }, 0);
   };
 
-  return (<div>
+  return (<div className={style.boardContainer}>
     <table className="main-table unselectable">
       <tbody>
         <tr className="heading row0" style={{ width: cellSize, height: 1 }}>
@@ -77,7 +77,7 @@ export const Board = () => {
           <td>{8 - rowIndex}</td>
           {row.map((cell, colIndex) => (<td key={colIndex} className={cell[7] ? style.darker : style.square}>
             <div style={{ height: cellSize }} onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
-              <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} height={cellSize} width={cellSize} class={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
+              <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} height={cellSize} width={cellSize} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
             </div>
           </td>))}
         </tr>))}
