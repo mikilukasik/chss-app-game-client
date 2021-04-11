@@ -1,7 +1,7 @@
 .gameContainer {
-  /* background-color: blue; */
   display: grid;
-  grid-template-columns: 15% 84%;
-  grid-gap: 10px;
-  padding: 0 0.5%;
+  grid-template-columns: 15vw 82vw;
+  grid-gap: 1vw;
+  padding: 0 1vw;
+  height: 91vh;
 }

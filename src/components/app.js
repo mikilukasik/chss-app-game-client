@@ -11,7 +11,7 @@ import Game from '../routes/game';
 const App = () => (
 	<div id="app" className={style.appContainer}>
 		<Header />
-		<div id="main-content">
+		<div id="main-content" className={style.mainContent}>
 			<Router>
 				<Home path="/" />
 				<Game path="/game/" />

@@ -60,28 +60,17 @@ export const Board = () => {
   };
 
   return (<div className={style.boardContainer}>
-    <table className="main-table unselectable">
-      <tbody>
-        <tr className="heading row0" style={{ width: cellSize, height: 1 }}>
-          <td></td>
-          <td>A</td>
-          <td>B</td>
-          <td>C</td>
-          <td>D</td>
-          <td>E</td>
-          <td>F</td>
-          <td>G</td>
-          <td>H</td>
-        </tr>
-        {whiteState.map((row, rowIndex) => (<tr key={rowIndex} style={{ height: cellSize }}>
-          <td>{8 - rowIndex}</td>
-          {row.map((cell, colIndex) => (<td key={colIndex} className={cell[7] ? style.darker : style.square}>
-            <div style={{ height: cellSize }} onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
-              <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} height={cellSize} width={cellSize} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
-            </div>
-          </td>))}
-        </tr>))}
-      </tbody>
-    </table>
+    <div className={style.boardRow}>
+      <div className={style.boardHeadingCell}> </div>
+      {'ABCDEFGH'.split('').map((letter, i) => <div key={i} className={style.boardHeadingCell}>{letter}</div>)}
+    </div>
+    {whiteState.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
+      <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
+      {row.map((cell, colIndex) => (<div key={colIndex} className={cell[7] ? style.darker : style.square}>
+        <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
+          <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
+        </div>
+      </div>))}
+    </div>))}
   </div>);
 };
