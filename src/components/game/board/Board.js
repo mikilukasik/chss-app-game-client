@@ -38,6 +38,9 @@ export const Board = () => {
 
   const cellClickHandler = (rowIndex, colIndex, cell) => {
     if (!firstClickedCellAddress) {
+      // if 1st click is not on a white piece, nothing to do
+      if (table[colIndex][7 - rowIndex][0] !== 2) return;
+      
       cell[9] = true; // selected
       cell[5].forEach(([x, y]) => {
         table[x][y][9] = true; //highlighted
@@ -52,6 +55,9 @@ export const Board = () => {
       colIndex,
       7 - rowIndex
     ];
+
+    // if 2nd click is on a non-highlighted cell, nothing to do
+    if (!table[moveToMake[2]][moveToMake[3]][9]) return;
 
     if (moveToMake[0] === moveToMake[2] && moveToMake[1] === moveToMake[3]) {
       setFirstClickedCellAddress(null);
