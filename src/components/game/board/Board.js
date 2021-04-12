@@ -5,10 +5,13 @@ import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
 import { moveInTable } from 'chss-engine/src/engine/engine';
 import { gameSocket } from '../../..';
+import { ProgressBar } from '../progressBar';
 
 export const Board = () => {
   const { gameState, setGameState } = useContext(GameContext);
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
+  const [progressTotal, setProgressTotal] = useState();
+  const [progressCompleted, setProgressCompleted] = useState();
 
   gameSocket.on('updateGame', (data, comms) => {
     setGameState(data.cmdArgs); // TODO: we really need new payload from msg.. data is data
@@ -60,7 +63,17 @@ export const Board = () => {
     setGameState(nextGameState);
     setFirstClickedCellAddress(null);
 
-    gameSocket.do('makeComputerMove', nextGameState).then(console.log).catch(console.error);
+    const progressHandler = ({ progress: p }) => {
+      setProgressTotal(p.total);
+      setProgressCompleted(p.completed);
+    };
+
+    gameSocket.do('makeComputerMove', nextGameState, ({ onData }) => {
+      console.log('im executed')
+      onData(progressHandler);
+    }).then(console.log)
+      .catch(console.error)
+      .then(() => setProgressCompleted(0));
 
     // The below makes a computer move calculated locally
     // setTimeout(() => {
@@ -69,18 +82,21 @@ export const Board = () => {
     // }, 0);
   };
 
-  return (<div className={style.boardContainer}>
-    <div className={style.boardRow}>
-      <div className={style.boardHeadingCell}> </div>
-      {'ABCDEFGH'.split('').map((letter, i) => <div key={i} className={style.boardHeadingCell}>{letter}</div>)}
-    </div>
-    {whiteState.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
-      <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
-      {row.map((cell, colIndex) => (<div key={colIndex} className={cell[7] ? style.darker : style.square}>
-        <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
-          <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
-        </div>
+  return (<div>
+    <ProgressBar progress={{ total: progressTotal, completed: progressCompleted }} />
+    <div className={style.boardContainer}>
+      <div className={style.boardRow}>
+        <div className={style.boardHeadingCell}> </div>
+        {'ABCDEFGH'.split('').map((letter, i) => <div key={i} className={style.boardHeadingCell}>{letter}</div>)}
+      </div>
+      {whiteState.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
+        <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
+        {row.map((cell, colIndex) => (<div key={colIndex} className={cell[7] ? style.darker : style.square}>
+          <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
+            <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
+          </div>
+        </div>))}
       </div>))}
-    </div>))}
+    </div>
   </div>);
 };

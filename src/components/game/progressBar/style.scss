@@ -1,0 +1,22 @@
+.progressBar {
+  position: absolute;
+  top: 6vh;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  display: table;
+  color: transparent;
+}
+
+.progressCell {
+  display: table-cell;
+  background-color: transparent;
+  height: 3px;
+  font-size: 0;
+  transition: background-color 1s ease;
+
+}
+
+.progressCell.progressCellFilled {
+  background-color: #3199f1;
+}

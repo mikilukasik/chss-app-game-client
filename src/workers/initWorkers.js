@@ -6,11 +6,10 @@ export const initWorkers = () => {
 
   workersSocket.on('solveSmallMoveTask', (data, comms) => {
     const smallMoveTask = data.cmdArgs;
-    console.log({smallMoveTask});
 
     const deepeningTask = new DeepeningTask(smallMoveTask)
     oneDeeper(deepeningTask)
-    
+
     const res = []
     while (deepeningTask.smallDeepeningTasks.length > 1) {
       const smallDeepeningTask = deepeningTask.smallDeepeningTasks.pop()
