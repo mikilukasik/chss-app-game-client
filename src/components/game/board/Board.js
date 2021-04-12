@@ -3,7 +3,7 @@ import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { moveInTable, singleThreadAi } from 'chss-engine/src/engine/engine';
+import { moveInTable } from 'chss-engine/src/engine/engine';
 import { gameSocket } from '../../..';
 
 export const Board = () => {
@@ -60,10 +60,13 @@ export const Board = () => {
     setGameState(nextGameState);
     setFirstClickedCellAddress(null);
 
-    setTimeout(() => {
-      const { moveCoords } = singleThreadAi(nextGameState, 3)
-      setGameState(Object.assign({}, moveInTable(moveCoords, nextGameState)));
-    }, 0);
+    gameSocket.do('makeComputerMove', nextGameState).then(console.log).catch(console.error);
+
+    // The below makes a computer move calculated locally
+    // setTimeout(() => {
+    //   const { moveCoords } = singleThreadAi(nextGameState, 3)
+    //   setGameState(Object.assign({}, moveInTable(moveCoords, nextGameState)));
+    // }, 0);
   };
 
   return (<div className={style.boardContainer}>
