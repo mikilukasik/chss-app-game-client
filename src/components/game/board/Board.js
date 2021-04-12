@@ -37,6 +37,8 @@ export const Board = () => {
   });
 
   const cellClickHandler = (rowIndex, colIndex, cell) => {
+    if (!gameState.wNext) return;
+
     if (!firstClickedCellAddress) {
       // if 1st click is not on a white piece, nothing to do
       if (table[colIndex][7 - rowIndex][0] !== 2) return;
@@ -74,12 +76,13 @@ export const Board = () => {
       setProgressCompleted(p.completed);
     };
 
-    gameSocket.do('makeComputerMove', nextGameState, ({ onData }) => {
-      console.log('im executed')
+    const dataHandler = ({ onData }) => {
       onData(progressHandler);
-    }).then(console.log)
+    };
+
+    gameSocket.do('makeComputerMove', nextGameState, dataHandler)
       .catch(console.error)
-      .then(() => setProgressCompleted(0));
+      .then(setProgressCompleted);
 
     // The below makes a computer move calculated locally
     // setTimeout(() => {

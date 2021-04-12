@@ -4,7 +4,7 @@ import { gameSocket } from '../../..';
 
 export const NewGameButton = () => {
   const newGameClickHandler = () => {
-		gameSocket.do('newGame').then(console.log);
+		gameSocket.do('newGame').catch(console.error);
   };
 
   return (<button onClick={newGameClickHandler}>
