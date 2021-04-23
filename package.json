@@ -31,7 +31,7 @@
   "dependencies": {
     "chss-engine": "git+https://github.com/mikilukasik/chss-engine.git",
     "express": "^4.17.1",
-    "msg": "github:mikilukasik/msg",
+    "msg": "git+https://github.com/mikilukasik/msg.git",
     "preact": "^10.3.2",
     "preact-render-to-string": "^5.1.4",
     "preact-router": "^3.2.1"
