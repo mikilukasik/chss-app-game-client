@@ -4,9 +4,7 @@ import { workersSocket } from '..';
 export const initWorkers = () => {
   console.log('Starting workers..');
 
-  workersSocket.on('solveSmallMoveTask', (data, comms) => {
-    const smallMoveTask = data.cmdArgs;
-
+  workersSocket.on('solveSmallMoveTask', (smallMoveTask, comms) => {
     const deepeningTask = new DeepeningTask(smallMoveTask)
     oneDeeper(deepeningTask)
 

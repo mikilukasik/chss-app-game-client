@@ -14,7 +14,7 @@ export const Board = () => {
   const [progressCompleted, setProgressCompleted] = useState();
 
   gameSocket.on('updateGame', (data, comms) => {
-    setGameState(data.cmdArgs); // TODO: we really need new payload from msg.. data is data
+    setGameState(data);
     comms.send('OK');
   });
 
