@@ -1,8 +1,13 @@
 import { DeepeningTask, oneDeeper, solveDeepeningTask, resolveDepth } from '../../chss-engine/src/engine/engine';
-import { workersSocket } from '..';
+import { msgClient } from '../../msg/src/client';
+import { ensureCookies } from '../services/cookieService';
 
-export const initWorkers = () => {
+
+export const initWorkers = async() => {
   console.log('Starting workers..');
+
+  await ensureCookies();
+  const workersSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/workersSocket`);
 
   workersSocket.on('solveSmallMoveTask', (smallMoveTask, comms) => {
     const deepeningTask = new DeepeningTask(smallMoveTask)
