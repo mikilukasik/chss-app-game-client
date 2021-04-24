@@ -1,4 +1,4 @@
-import { DeepeningTask, oneDeeper, solveDeepeningTask, resolveDepth } from 'chss-engine/src/engine/engine';
+import { DeepeningTask, oneDeeper, solveDeepeningTask, resolveDepth } from '../../chss-engine/src/engine/engine';
 import { workersSocket } from '..';
 
 export const initWorkers = () => {

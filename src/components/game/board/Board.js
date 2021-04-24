@@ -3,7 +3,7 @@ import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { moveInTable } from 'chss-engine/src/engine/engine';
+import { moveInTable } from '../../../../chss-engine/src/engine/engine';
 import { gameSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
 
