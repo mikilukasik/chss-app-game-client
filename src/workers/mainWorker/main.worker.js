@@ -3,6 +3,9 @@ import { msgClient } from '../../../msg/src/client';
 import { getHardwareConcurrency } from '../../services/speedService';
 import Worker from '../subWorker/sub.worker.js'
 import uuid from 'uuid-random';
+import { clientLogger } from '../../../chss-service-logger';
+// import { logger } from '../..';
+clientLogger({ msgClient });
 
 (async() => {
   const workersSocket = msgClient.ws(`ws://${typeof self === 'undefined' || self.location.hostname}:3300/workersSocket`);
