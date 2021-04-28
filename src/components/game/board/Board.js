@@ -3,9 +3,11 @@ import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { moveInTable } from '../../../../chss-engine/src/engine/engine';
+import { coordsToMoveString, moveInTable, getHitScores } from '../../../../chss-engine/src/engine/engine';
 import { gameSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
+
+/* debug */ let started;
 
 export const Board = () => {
   const { gameState, setGameState } = useContext(GameContext);
@@ -18,9 +20,18 @@ export const Board = () => {
     comms.send('OK');
   });
 
+  /* debug */ gameSocket.on('displayStats', (stats, comms) => {
+  /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
+  /* debug */   console.log(convertedStats);
+  /* debug */   comms.send('ok');
+  /* debug */ });
+
   if (!gameState) return;
 
   const { table } = gameState;
+
+  /* debug */ window.table = table;
+  /* debug */ window.getHitScores = getHitScores;
 
   const whiteState = [];
   for (let i = 0; i < 8; i += 1) {
@@ -80,7 +91,9 @@ export const Board = () => {
       onData(progressHandler);
     };
 
+    /* debug */ started = Date.now();
     gameSocket.do('makeComputerMove', nextGameState, dataHandler)
+      /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);
 
