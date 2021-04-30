@@ -4,6 +4,3 @@
 [submodule "chss-engine"]
 	path = chss-engine
 	url = https://github.com/mikilukasik/chss-engine
-[submodule "chss-service-logger"]
-	path = chss-service-logger
-	url = https://github.com/mikilukasik/chss-service-logger
