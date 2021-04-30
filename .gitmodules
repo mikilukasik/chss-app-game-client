@@ -1,9 +1,9 @@
 [submodule "msg"]
 	path = msg
 	url = https://github.com/mikilukasik/msg
-[submodule "chss-engine"]
-	path = chss-engine
-	url = https://github.com/mikilukasik/chss-engine
 [submodule "chss-module-logger"]
 	path = chss-module-logger
 	url = ../chss-module-logger/
+[submodule "chss-module-engine"]
+	path = chss-module-engine
+	url = ../chss-module-engine

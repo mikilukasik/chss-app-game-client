@@ -1,4 +1,4 @@
-import { DeepeningTask, oneDeeper, resolveDepth } from '../../../chss-engine/src/engine/engine';
+import { DeepeningTask, oneDeeper, resolveDepth } from '../../../chss-module-engine/src/engine/engine';
 
 export const solveSmallMoveTaskOnSubWorkers = async({ smallMoveTask, getNextAvailableWorker }) => new Promise(async(resolve) => {
   const deepeningTask = new DeepeningTask(smallMoveTask)

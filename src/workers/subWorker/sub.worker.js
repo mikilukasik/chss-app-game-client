@@ -1,4 +1,4 @@
-import { solveDeepeningTask } from '../../../chss-engine/src/engine/engine';
+import { solveDeepeningTask } from '../../../chss-module-engine/src/engine/engine';
 
 (async() => {
   onmessage = ({ data }) => {
