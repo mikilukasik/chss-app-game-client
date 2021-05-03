@@ -7,6 +7,9 @@ import { mainWorkerLogger } from './mainWorkerLogger';
 // catch and log errors from this worker
 (async() => {
   const workersSocket = msgClient.ws(`ws://${typeof self === 'undefined' || self.location.hostname}:3300/workersSocket`);
+  workersSocket.on('init', (data, comms) => {
+    comms.send('ok');
+  });
 
   if (!self.Worker) {
     // iOS doesn't support worker in worker, main thread will create the worker pool

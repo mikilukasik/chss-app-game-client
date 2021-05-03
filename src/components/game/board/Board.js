@@ -3,7 +3,7 @@ import style from './style.scss';
 
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { coordsToMoveString, moveInTable, getHitScores } from '../../../../chss-module-engine/src/engine/engine';
+import { coordsToMoveString, moveInTable, getHitScores, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
 import { gameSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
 
@@ -33,15 +33,7 @@ export const Board = () => {
   /* debug */ window.table = table;
   /* debug */ window.getHitScores = getHitScores;
 
-  const whiteState = [];
-  for (let i = 0; i < 8; i += 1) {
-    whiteState[i] = [];
-    for (let j = 0; j < 8; j += 1) {
-      // if(oldValue&&oldValue[i][j][0] != newValue[i][j][0]) scope.input[i][j][15] = true       //highlight moved
-      whiteState[i][j] = table[j][7 - i]
-      if ((i + j) & 1) whiteState[i][j][7] = true     //grey fields
-    }
-  }
+  const whiteState = rotateTable(table);
 
   const clearHighlights = (game) => Object.assign({}, game, {
     table: game.table.map(row => row.map(cell => Object.assign({}, cell, { 9: null })))
@@ -78,7 +70,7 @@ export const Board = () => {
       return;
     }
 
-    const nextGameState = moveInTable(moveToMake, gameState)
+    const nextGameState = moveInTable(moveToMake, gameState);
     setGameState(nextGameState);
     setFirstClickedCellAddress(null);
 
@@ -113,7 +105,7 @@ export const Board = () => {
       </div>
       {whiteState.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
         <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
-        {row.map((cell, colIndex) => (<div key={colIndex} className={cell[7] ? style.darker : style.square}>
+        {row.map((cell, colIndex) => (<div key={colIndex} className={(rowIndex + colIndex) & 1  ? style.darker : style.square}>
           <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
             <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
           </div>
