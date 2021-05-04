@@ -4,7 +4,7 @@ import style from './style.scss';
 import { useContext, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
 import { coordsToMoveString, moveInTable, getHitScores, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
-import { gameSocket } from '../../..';
+import { playerSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
 
 /* debug */ let started;
@@ -15,12 +15,12 @@ export const Board = () => {
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
 
-  gameSocket.on('updateGame', (data, comms) => {
+  playerSocket.on('updateGame', (data, comms) => {
     setGameState(data);
     comms.send('OK');
   });
 
-  /* debug */ gameSocket.on('displayStats', (stats, comms) => {
+  /* debug */ playerSocket.on('displayStats', (stats, comms) => {
   /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
   /* debug */   console.log(convertedStats);
   /* debug */   comms.send('ok');
@@ -84,7 +84,7 @@ export const Board = () => {
     };
 
     /* debug */ started = Date.now();
-    gameSocket.do('makeComputerMove', nextGameState, dataHandler)
+    playerSocket.do('makeComputerMove', nextGameState, dataHandler)
       /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);

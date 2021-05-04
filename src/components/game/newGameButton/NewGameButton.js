@@ -1,10 +1,10 @@
 import { h } from 'preact';
 import style from './style.scss';
-import { gameSocket } from '../../..';
+import { playerSocket } from '../../..';
 
 export const NewGameButton = () => {
   const newGameClickHandler = () => {
-		gameSocket.do('newGame').catch(console.error);
+		playerSocket.do('newGame').catch(console.error);
   };
 
   return (<button onClick={newGameClickHandler}>
