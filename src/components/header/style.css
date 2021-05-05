@@ -1,6 +1,8 @@
 .header {
 	background: #fff;
-	box-shadow: 0 2px 3px #aaa;;
+	box-shadow: 0 2px 3px #aaa;
+	display: grid;
+	grid-template-columns: 80px auto;
 }
 
 .header h1 {
@@ -19,7 +21,6 @@
 }
 
 .header nav a {
-	display: inline-block;
 	height: 6vh;
 	line-height: 6vh;
 	padding: 0 15px;
@@ -29,6 +30,7 @@
 	text-decoration: none;
 	color: navy;
 	will-change: background-color;
+	float: right;
 }
 
 .header nav a:hover,

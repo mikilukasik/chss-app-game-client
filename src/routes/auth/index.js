@@ -1,2 +1,2 @@
-import { Auth } from './Auth';
-export default Auth;
+import { AuthRoute } from './AuthRoute';
+export default AuthRoute;

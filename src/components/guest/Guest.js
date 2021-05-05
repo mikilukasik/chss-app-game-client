@@ -1,16 +1,17 @@
 import { h } from 'preact';
-import { useContext, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { authSocket } from '../..';
 import style from './style.css';
 
 export const Guest = () => {
   const [guestName, setGuestName] = useState();
+  const [error, setError] = useState();
 
 	const onGuestNameChange = ({ target: { value } }) => setGuestName(value);
 
 	const onLoginClick = () => {
-		authSocket.do('guestLogin', { guestName })
-			.then(console.log, console.error)
+		setError(null);
+		authSocket.do('guestLogin', { username: guestName }).catch(setError)
 	};
 
 	return (<div className={style.guestContainer}>
@@ -28,6 +29,7 @@ export const Guest = () => {
 					<br />
 					<button onClick={onLoginClick} disabled={!guestName}>Login</button>
 				</label>
+				{error && <div className={style.errorMessage}>{error}</div>}
 			</form>
 		</div>
 	</div>);

@@ -10,7 +10,7 @@
 .guestContainer .header {
 	padding: 20px;
 	font-size: 24px;
-	line-height: 3vh;
+	line-height: 4vh;
 	font-weight: 400;
 	color: navy;
 }
@@ -48,4 +48,8 @@
 
 .guestContainer .guestForm button:disabled {
 	color: white;
+}
+
+.errorMessage {
+	color: red;
 }

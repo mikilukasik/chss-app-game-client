@@ -1,38 +1,7 @@
-.authHeader {
-	background: #fff;
-}
-
 .authContainer {
 	display: grid;
-  grid-template-rows: 6vh auto;
+  grid-template-rows: 6vh min-content;
   grid-gap: 1vw;
   padding: 0 1vw;
   height: 91vh;
-}
-
-.authHeader nav {
-	font-size: 100%;
-  box-shadow: 1px 4px 7px #aaa;
-}
-
-.authHeader nav a {
-	display: inline-block;
-	height: 6vh;
-	line-height: 6vh;
-	padding: 0 15px;
-	min-width: 50px;
-	text-align: center;
-	background: rgba(255,255,255,0);
-	text-decoration: none;
-	color: navy;
-	will-change: background-color;
-}
-
-.authHeader nav a:hover,
-.authHeader nav a:active {
-	background: rgba(0,0,0,0.1);
-}
-
-.authHeader nav a.active {
-	background: rgba(0,0,0,0.2);
 }

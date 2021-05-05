@@ -1,10 +1,10 @@
-import { ensureCookies } from '../services/cookieService';
+import { ensureClientSpeedCookie } from '../services/cookieService';
 import MainWorker from './mainWorker/main.worker.js'
 import { solveSmallMoveTaskOnSubWorkers } from './mainWorker/solveSmallMoveTaskOnSubWorkers';
 import { createSubWorkerPool } from './subWorkerPool';
 
 export const initWorkers = async() => {
-  await ensureCookies();
+  await ensureClientSpeedCookie();
 
   const mainWorker = new MainWorker();
   let getNextAvailableWorker;
