@@ -4,6 +4,7 @@ import { useContext } from 'preact/hooks';
 import { route } from 'preact-router';
 import { playerSocket } from '../../..';
 import UserContext from '../../../context/UserContext';
+import { setCurrentGameId } from '../../../services/gamesService';
 
 export const NewGameButton = () => {
 	const { user } = useContext(UserContext);
@@ -19,8 +20,7 @@ export const NewGameButton = () => {
       againstComputer: true,
       userColor: 'white',
     }).then(({ gameId }) => {
-      console.log({ gameId });
-      // TODO: subscribe to that game and make it active
+      setCurrentGameId(gameId);
     }).catch(console.error);
   };
 

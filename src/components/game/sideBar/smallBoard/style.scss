@@ -1,0 +1,76 @@
+.darker {
+  background-color: silver;
+}
+
+.square {
+  background-color: white;
+}
+
+.selected2 {
+  -webkit-animation: fadeIt 2s ease-in-out;
+  -moz-animation: fadeIt 2s ease-in-out;
+  -o-animation: fadeIt 2s ease-in-out;
+  animation: fadeIt 2s ease-in-out;
+}
+
+.selected {
+  background-color: rgba(255,153,0,0.75);
+}
+
+.boardContainer {
+  background-color: #fff;
+  padding: 10px;
+  box-shadow: 0px 0px 5px #aaa;
+  display: grid;
+  grid-template-rows: repeat(8, 1vw);
+  grid-area: board;
+  font-size: 0.6rem;
+}
+
+.boardRow {
+  display: grid;
+  grid-template-columns: repeat(8, 1vw);
+  img {
+    max-width:100%;
+    max-height:100%;
+  }
+}
+
+@media (min-width: 700px) {
+  .boardContainer {
+    grid-template-rows: repeat(8, 2vh);
+  }
+  .boardRow {
+    grid-template-columns: repeat(8, 2vh);
+  }
+}
+
+@media (min-width: 1000px) {
+  .boardContainer {
+    grid-template-rows: repeat(8, 2.5vh);
+  }
+  .boardRow {
+    grid-template-columns: repeat(8, 2.5vh);
+  }
+}
+
+.boardHeadingCellWrapper {
+  display: table;
+  height: 100%;
+  overflow: hidden;
+}
+
+.boardHeadingCell {
+  vertical-align: middle;
+  text-align: center;
+  display: table-cell;
+  background-color: #ccc;
+}
+
+.boardLabel {
+  text-align: center;
+  padding-top: 7px;
+  margin-bottom: -2px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}

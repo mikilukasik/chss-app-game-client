@@ -15,18 +15,13 @@ export const Board = () => {
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
 
-  playerSocket.on('updateGame', (data, comms) => {
-    setGameState(data);
-    comms.send('OK');
-  });
+  if (!gameState) return null;
 
   /* debug */ playerSocket.on('displayStats', (stats, comms) => {
   /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
   /* debug */   console.log(convertedStats);
   /* debug */   comms.send('ok');
   /* debug */ });
-
-  if (!gameState) return;
 
   const { table } = gameState;
 
@@ -84,7 +79,7 @@ export const Board = () => {
     };
 
     /* debug */ started = Date.now();
-    playerSocket.do('makeComputerMove', nextGameState, dataHandler)
+    playerSocket.do('updateGame', nextGameState, dataHandler)
       /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);

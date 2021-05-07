@@ -1,37 +1,108 @@
-let _activeGameIdsSetter;
-const activeGameIdsSetterAwaiters = [];
+const activeGamesCache = [];
+const gameLoadedAwaiters = {};
 
-let _activeGamesDistobj;
-const activeGamesDistobjAwaiters = [];
+let currentGameId;
 
-const getActiveGameIdsSetter = () => new Promise(resolve => {
-	if (_activeGameIdsSetter) return resolve(_activeGameIdsSetter);
-	activeGameIdsSetterAwaiters.push(resolve);
+let _activeGamesSetter;
+const activeGamesSetterAwaiters = [];
+
+let _playerSocket;
+const playerSocketAwaiters = [];
+
+let _currentGameUpdater;
+const currentGameUpdaterAwaiters = [];
+
+const getActiveGamesSetter = () => new Promise(resolve => {
+	if (_activeGamesSetter) return resolve(_activeGamesSetter);
+	activeGamesSetterAwaiters.push(resolve);
 });
 
-export const setActiveGameIds = async(activeGameIds) => {
-	const activeGameIdsSetter = await getActiveGameIdsSetter();
-	activeGameIdsSetter(activeGameIds);
+export const setActiveGames = async(activeGames) => {
+	const activeGamesSetter = await getActiveGamesSetter();
+	activeGamesSetter(activeGames);
 };
 
-export const useActiveGameIdsSetter = (activeGameIdsSetter) => {
-  _activeGameIdsSetter = activeGameIdsSetter;
-  activeGameIdsSetterAwaiters.forEach(resolve => resolve(activeGameIdsSetter));		
+export const useActiveGamesSetter = (activeGamesSetter) => {
+  _activeGamesSetter = activeGamesSetter;
+  activeGamesSetterAwaiters.forEach(resolve => resolve(activeGamesSetter));		
 };
 
-export const getActiveGamesDistObj = () => new Promise(resolve => {
-  if (_activeGamesDistobj) return resolve(_activeGamesDistobj);
-  activeGamesDistobjAwaiters.push(resolve);
+export const getPlayerSocket = () => new Promise(resolve => {
+  if (_playerSocket) return resolve(_playerSocket);
+  playerSocketAwaiters.push(resolve);
 });
 
-export const useActiveGamesDistobj = (activeGamesDistobj) => {
-  _activeGamesDistobj = activeGamesDistobj;
-  activeGamesDistobjAwaiters.forEach(resolve => resolve(activeGamesDistobj));
+export const usePlayerSocket = (playerSocket) => {
+  _playerSocket = playerSocket;
+  playerSocketAwaiters.forEach(resolve => resolve(playerSocket));
+};
+
+export const getCurrentGameUpdater = () => new Promise(resolve => {
+  if (_currentGameUpdater) return resolve(_currentGameUpdater);
+  currentGameUpdaterAwaiters.push(resolve);
+});
+
+export const useCurrentGameUpdater = (currentGameUpdater) => {
+  _currentGameUpdater = currentGameUpdater;
+  currentGameUpdaterAwaiters.forEach(resolve => resolve(currentGameUpdater));
+};
+
+const waitForGameToLoad = async(id) => new Promise(resolve => {
+  if (activeGamesCache[id]) return resolve(activeGamesCache[id]);
+  gameLoadedAwaiters[id] = (gameLoadedAwaiters[id] || []).push(resolve);
+});
+
+export const setCurrentGameId = async(id) => {
+  currentGameId = id;
+  const currentGameUpdater = await getCurrentGameUpdater();
+  const currentGame = activeGamesCache.find(game => game.id === id) || waitForGameToLoad(id);
+  currentGameUpdater(currentGame);
 };
 
 (async() => {
-  const activeGamesDistObj = await getActiveGamesDistObj();
-  activeGamesDistObj.onChange(() => {
-    setActiveGameIds(activeGamesDistObj.data.ids.slice());
+  const playerSocket = await getPlayerSocket();
+  const activeGames = await playerSocket.do('getActiveGames')
+  activeGamesCache.push(...activeGames);
+
+  playerSocket.subscribe('msg:gameCreated', (game) => {
+    activeGamesCache.unshift(game);
+    playerSocket.subscribe(`msg:gameChanged:${game.id}`, async(newGameState) => {
+      const activeGamesCacheIndex = activeGamesCache.findIndex(({ id }) => game.id === id)
+
+      activeGamesCache[activeGamesCacheIndex] = newGameState;
+      if (gameLoadedAwaiters[game.id]) gameLoadedAwaiters[game.id].forEach(resolve => resolve(newGameState));
+      if (currentGameId === game.id) {
+        const currentGameUpdater = await getCurrentGameUpdater();
+        currentGameUpdater(newGameState);
+      }
+      
+      setActiveGames(activeGamesCache.slice());
+    });
+    setActiveGames(activeGamesCache.slice());
   });
+
+  const activeGamesSetter = await getActiveGamesSetter();
+  activeGamesSetter(activeGamesCache);
+  activeGamesCache.forEach(async(game) => {
+    const { id } = game;
+    if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(game));
+    if (currentGameId === id) {
+      const currentGameUpdater = await getCurrentGameUpdater();
+      currentGameUpdater(game);
+    }
+
+    const playerSocket = await getPlayerSocket();
+    playerSocket.subscribe(`msg:gameChanged:${id}`, async(newGameState) => {
+      console.log('received game changed 2')
+
+      const activeGamesCacheIndex = activeGamesCache.findIndex(game => game.id === id)
+      activeGamesCache[activeGamesCacheIndex] = newGameState;
+      if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(newGameState));
+      if (currentGameId === id) {
+        const currentGameUpdater = await getCurrentGameUpdater();
+        currentGameUpdater(newGameState);
+      }
+      setActiveGames(activeGamesCache.slice());
+    });
+  })
 })();
