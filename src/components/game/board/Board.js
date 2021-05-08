@@ -15,7 +15,7 @@ export const Board = () => {
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
-	const { user: { userId } } = useContext(UserContext);
+	const { user: { userId } = {} } = useContext(UserContext);
 
   if (!gameState) return null;
 
