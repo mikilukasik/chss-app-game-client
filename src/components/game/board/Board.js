@@ -6,6 +6,7 @@ import GameContext from '../../../context/GameContext';
 import { coordsToMoveString, moveInTable, getHitScores, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
 import { playerSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
+import UserContext from '../../../context/UserContext';
 
 /* debug */ let started;
 
@@ -14,6 +15,7 @@ export const Board = () => {
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
+	const { user: { userId } } = useContext(UserContext);
 
   if (!gameState) return null;
 
@@ -35,7 +37,11 @@ export const Board = () => {
   });
 
   const cellClickHandler = (rowIndex, colIndex, cell) => {
-    if (!gameState.wNext) return;
+    // if (!gameState.wNext) return;
+    if (!(
+      gameState.wNext && userId === gameState.wPlayer ||
+      !gameState.wNext && userId === gameState.bPlayer
+    )) return;
 
     if (!firstClickedCellAddress) {
       // if 1st click is not on a white piece, nothing to do

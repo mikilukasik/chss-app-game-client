@@ -64,9 +64,15 @@ export const setCurrentGameId = async(id) => {
   const activeGames = await playerSocket.do('getActiveGames')
   activeGamesCache.push(...activeGames);
 
-  playerSocket.subscribe('msg:gameCreated', (game) => {
+  playerSocket.subscribe('activeGamePaused', (game) => {
+    activeGamesCache.splice(activeGamesCache.findIndex(({ id }) => id === game.id), 1);
+    playerSocket.unsubscribe(`gameChanged:${game.id}`);
+    setActiveGames(activeGamesCache.slice());
+  });
+
+  playerSocket.subscribe('gameCreated', (game) => {
     activeGamesCache.unshift(game);
-    playerSocket.subscribe(`msg:gameChanged:${game.id}`, async(newGameState) => {
+    playerSocket.subscribe(`gameChanged:${game.id}`, async(newGameState) => {
       const activeGamesCacheIndex = activeGamesCache.findIndex(({ id }) => game.id === id)
 
       activeGamesCache[activeGamesCacheIndex] = newGameState;
@@ -92,7 +98,7 @@ export const setCurrentGameId = async(id) => {
     }
 
     const playerSocket = await getPlayerSocket();
-    playerSocket.subscribe(`msg:gameChanged:${id}`, async(newGameState) => {
+    playerSocket.subscribe(`gameChanged:${id}`, async(newGameState) => {
       console.log('received game changed 2')
 
       const activeGamesCacheIndex = activeGamesCache.findIndex(game => game.id === id)
