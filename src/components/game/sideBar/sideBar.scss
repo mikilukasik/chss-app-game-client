@@ -1,9 +1,21 @@
 .sideBarContainer {
-  display: grid;
-  grid-template-rows: 60px;
   background-color: #fff;
   padding: 10px;
   box-shadow: 4px 4px 3px #aaa;
   grid-area: sidebar;
-  grid-gap: 5px;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+.sideBarItem {
+  display: inline-block;
+  width: fit-content;
+  height: fit-content;
+  padding: 5px
+}
+
+@media (min-width: 1000px) {
+  .sideBarItem {
+    display: block;
+  }
 }

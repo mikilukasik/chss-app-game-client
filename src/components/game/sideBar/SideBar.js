@@ -9,7 +9,9 @@ export const SideBar = () => {
 	const { games } = useContext(GameContext);
 
 return (<div className={style.sideBarContainer}>
-    <NewGameButton />
-    {games && games.map(game => <SmallBoard game={game} />)}
+    <div className={style.sideBarItem}>
+      <NewGameButton />
+    </div>
+    {games && games.map(game => <div className={style.sideBarItem}><SmallBoard game={game} /></div>)}
   </div>);
 };

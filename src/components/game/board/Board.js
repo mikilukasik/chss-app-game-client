@@ -52,10 +52,13 @@ export const Board = () => {
   });
 
   const cellClickHandler = (rowIndex, colIndex, cell) => {
-    if (!(
-      gameState.wNext && userId === gameState.wPlayer ||
-      !gameState.wNext && userId === gameState.bPlayer
-    )) return;
+    if (
+      gameState.completed ||
+      !(
+        gameState.wNext && userId === gameState.wPlayer ||
+        !gameState.wNext && userId === gameState.bPlayer
+      )
+    ) return;
 
     if (!firstClickedCellAddress) {
       // if 1st click is not on a white piece, nothing to do

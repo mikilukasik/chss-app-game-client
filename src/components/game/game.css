@@ -1,6 +1,6 @@
 .gameContainer {
   display: grid;
-  grid-template-rows: 96vw auto;
+  grid-template-rows: 1fr auto;
   grid-gap: 1vw;
   padding: 0 1vw;
   height: 91vh;
@@ -9,16 +9,10 @@
     "sidebar";
 }
 
-@media (min-width: 700px) {
-  .gameContainer {
-  grid-template-rows: 73vh 18vh;
-  }
-}
-
 @media (min-width: 1000px) {
   .gameContainer {
     grid-template-rows: none;
-    grid-template-columns: max-content;
+    grid-template-columns: auto 1fr;
     grid-template-areas:
       "sidebar board";
   }

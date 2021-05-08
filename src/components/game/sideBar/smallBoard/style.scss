@@ -22,35 +22,17 @@
   padding: 10px;
   box-shadow: 0px 0px 5px #aaa;
   display: grid;
-  grid-template-rows: repeat(8, 1vw);
+  grid-template-rows: repeat(8, 2vh);
   grid-area: board;
   font-size: 0.6rem;
 }
 
 .boardRow {
   display: grid;
-  grid-template-columns: repeat(8, 1vw);
+  grid-template-columns: repeat(8, 2vh);
   img {
     max-width:100%;
     max-height:100%;
-  }
-}
-
-@media (min-width: 700px) {
-  .boardContainer {
-    grid-template-rows: repeat(8, 2vh);
-  }
-  .boardRow {
-    grid-template-columns: repeat(8, 2vh);
-  }
-}
-
-@media (min-width: 1000px) {
-  .boardContainer {
-    grid-template-rows: repeat(8, 2.5vh);
-  }
-  .boardRow {
-    grid-template-columns: repeat(8, 2.5vh);
   }
 }
 
