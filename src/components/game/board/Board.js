@@ -24,15 +24,18 @@ export const Board = () => {
 	const { user: { userId } = {} } = useContext(UserContext);
 
   if (!gameState) return null;
+  const { table } = gameState;
+
+  if (isNewGameState) {
+    setFirstClickedCellAddress(null);
+    for (const [x, row] of table.entries()) for (const [y, cell] of row.entries()) cell[9] = false;
+  }
 
   /* debug */ playerSocket.on('displayStats', (stats, comms) => {
   /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
   /* debug */   console.log(convertedStats);
   /* debug */   comms.send('ok');
   /* debug */ });
-
-  const { table } = gameState;
-
   /* debug */ window.table = table;
   /* debug */ window.getHitScores = getHitScores;
 
@@ -49,7 +52,6 @@ export const Board = () => {
   });
 
   const cellClickHandler = (rowIndex, colIndex, cell) => {
-    // if (!gameState.wNext) return;
     if (!(
       gameState.wNext && userId === gameState.wPlayer ||
       !gameState.wNext && userId === gameState.bPlayer
