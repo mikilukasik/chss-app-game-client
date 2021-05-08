@@ -53,7 +53,18 @@ const waitForGameToLoad = async(id) => new Promise(resolve => {
 });
 
 export const setCurrentGameId = async(id) => {
+  if (id === currentGameId || !id) return;
+  const playerSocket = await getPlayerSocket();
+
+  if (currentGameId) playerSocket.unsubscribe(`gameCompleted:${currentGameId}`);
+  playerSocket.subscribe(`gameCompleted:${id}`, ({ whiteWon, blackWon, isDraw }) => {
+    if (blackWon) alert(`Black won.`);
+    if (whiteWon) alert(`White won.`);
+    if (isDraw) alert(`Game finished in a draw.`);
+  });
+
   currentGameId = id;
+
   const currentGameUpdater = await getCurrentGameUpdater();
   const currentGame = gamesCache.find(game => game.id === id) || waitForGameToLoad(id);
   currentGameUpdater(currentGame);
@@ -99,8 +110,6 @@ export const setCurrentGameId = async(id) => {
 
     const playerSocket = await getPlayerSocket();
     playerSocket.subscribe(`gameChanged:${id}`, async(newGameState) => {
-      console.log('received game changed 2')
-
       const gamesCacheIndex = gamesCache.findIndex(game => game.id === id)
       gamesCache[gamesCacheIndex] = newGameState;
       if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(newGameState));
