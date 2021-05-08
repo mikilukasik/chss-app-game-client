@@ -11,13 +11,13 @@ import Home from '../routes/home';
 import Game from '../routes/game';
 import AuthRoute from '../routes/auth';
 import { useUserSetter } from '../services/userService';
-import { useActiveGamesSetter, useCurrentGameUpdater } from '../services/gamesService';
+import { useGamesSetter, useCurrentGameUpdater } from '../services/gamesService';
 
 const App = () => {
-	const [activeGames, setActiveGames] = useState();
+	const [games, setGames] = useState();
 	const [gameState, setGameState] = useState();
 	const [isNewGameState, setIsNewGameState] = useState();
-  const gameContext = { gameState, setGameState, activeGames, setActiveGames, isNewGameState, setIsNewGameState };
+  const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState };
 
 	const [user, setUser] = useState();
   const userContext = { user, setUser };
@@ -27,8 +27,8 @@ const App = () => {
 			setUser(user);
 		});
 
-		useActiveGamesSetter((activeGames) => {
-			setActiveGames(activeGames);
+		useGamesSetter((games) => {
+			setGames(games);
 		});
 
 		let previousId;

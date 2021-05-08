@@ -6,10 +6,10 @@ import GameContext from '../../../context/GameContext';
 import { SmallBoard } from './smallBoard';
 
 export const SideBar = () => {
-	const { activeGames } = useContext(GameContext);
+	const { games } = useContext(GameContext);
 
 return (<div className={style.sideBarContainer}>
     <NewGameButton />
-    {activeGames && activeGames.map(game => <SmallBoard game={game} />)}
+    {games && games.map(game => <SmallBoard game={game} />)}
   </div>);
 };
