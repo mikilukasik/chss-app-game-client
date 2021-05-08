@@ -10,8 +10,14 @@ import UserContext from '../../../context/UserContext';
 
 /* debug */ let started;
 
+const previosTable = [];
+for (let x = 0; x < 8; x += 1) {
+  previosTable[x] = [];
+  for (let y = 0; y < 8; y += 1) previosTable[x][y] = [];
+}
+
 export const Board = () => {
-  const { gameState, setGameState } = useContext(GameContext);
+  const { gameState, setGameState, isNewGameState, setIsNewGameState } = useContext(GameContext);
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
@@ -31,6 +37,12 @@ export const Board = () => {
   /* debug */ window.getHitScores = getHitScores;
 
   const whiteState = rotateTable(table);
+
+  for (const [x, row] of whiteState.entries()) for (const [y, cell] of row.entries()) {
+    if (!isNewGameState && (cell[0] !== previosTable[x][y][0] || cell[0] !== previosTable[x][y][0])) cell[15] = true; // highlight if changed
+    previosTable[x][y] = [cell[0], cell[1]];
+  }
+  setIsNewGameState(false);
 
   const clearHighlights = (game) => Object.assign({}, game, {
     table: game.table.map(row => row.map(cell => Object.assign({}, cell, { 9: null })))
@@ -108,7 +120,7 @@ export const Board = () => {
         <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
         {row.map((cell, colIndex) => (<div key={colIndex} className={(rowIndex + colIndex) & 1  ? style.darker : style.square}>
           <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
-            <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''}${cell[15] ? style.selected2 : ''}`} />
+            <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''} ${cell[15] ? style.selected2 : ''}`} />
           </div>
         </div>))}
       </div>))}

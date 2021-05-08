@@ -16,7 +16,8 @@ import { useActiveGamesSetter, useCurrentGameUpdater } from '../services/gamesSe
 const App = () => {
 	const [activeGames, setActiveGames] = useState();
 	const [gameState, setGameState] = useState();
-  const gameContext = { gameState, setGameState, activeGames, setActiveGames };
+	const [isNewGameState, setIsNewGameState] = useState();
+  const gameContext = { gameState, setGameState, activeGames, setActiveGames, isNewGameState, setIsNewGameState };
 
 	const [user, setUser] = useState();
   const userContext = { user, setUser };
@@ -30,7 +31,11 @@ const App = () => {
 			setActiveGames(activeGames);
 		});
 
+		let previousId;
 		useCurrentGameUpdater((game) => {
+			if (previousId !== game.id) setIsNewGameState(true);
+			previousId = game.id;
+
 			setGameState(game);
 		});
 	}, []);
