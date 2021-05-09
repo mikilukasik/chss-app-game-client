@@ -11,18 +11,19 @@ import Home from '../routes/home';
 import Game from '../routes/game';
 import AuthRoute from '../routes/auth';
 import { useUserSetter } from '../services/userService';
-import { useGamesSetter, useCurrentGameUpdater } from '../services/gamesService';
+import { useGamesSetter, useCurrentGameUpdater, getPlayerSocket } from '../services/gamesService';
 
 const App = () => {
 	const [games, setGames] = useState();
 	const [gameState, setGameState] = useState();
+	const [scoreBoardData, setScoreBoardData] = useState();
 	const [isNewGameState, setIsNewGameState] = useState();
-  const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState };
+  const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState, scoreBoardData, setScoreBoardData };
 
 	const [user, setUser] = useState();
   const userContext = { user, setUser };
 
-	useEffect(() => {
+	useEffect(async() => {
 		useUserSetter((user) => {
 			setUser(user);
 		});
@@ -35,9 +36,13 @@ const App = () => {
 		useCurrentGameUpdater((game) => {
 			if (previousId !== game.id) setIsNewGameState(true);
 			previousId = game.id;
-
 			setGameState(game);
 		});
+
+		const playerSocket = await getPlayerSocket();
+		const scoreBoardData = await playerSocket.do('getScoreBoard');
+		setScoreBoardData(scoreBoardData);
+		playerSocket.subscribe('scoreBoardChanged', setScoreBoardData);
 	}, []);
 
 	return (<div id="app" className={style.appContainer}>
