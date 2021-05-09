@@ -1,4 +1,4 @@
-const gamesCache = [];
+const gamesCache = {};
 const gameLoadedAwaiters = {};
 
 let currentGameId;
@@ -11,6 +11,10 @@ const playerSocketAwaiters = [];
 
 let _currentGameUpdater;
 const currentGameUpdaterAwaiters = [];
+
+const getSortedGames = () => Object.keys(gamesCache)
+  .map(key => gamesCache[key])
+  .sort((gameA, gameB) => new Date(gameB.createdAt).getTime() - new Date(gameA.createdAt).getTime())
 
 const getGamesSetter = () => new Promise(resolve => {
 	if (_gamesSetter) return resolve(_gamesSetter);
@@ -47,65 +51,69 @@ export const useCurrentGameUpdater = (currentGameUpdater) => {
   currentGameUpdaterAwaiters.forEach(resolve => resolve(currentGameUpdater));
 };
 
-const waitForGameToLoad = async(id) => new Promise(resolve => {
+const waitForGameToLoad = async(id) => new Promise(async(resolve) => {
   if (gamesCache[id]) return resolve(gamesCache[id]);
-  gameLoadedAwaiters[id] = (gameLoadedAwaiters[id] || []).push(resolve);
+
+  // TODO: rework the below when adding game filters. getGames should get gameIds from mongo only, then subscribe to all of them 
+  const playerSocket = await getPlayerSocket();
+  gamesCache[id] = await playerSocket.do('getGame', { id });
+  resolve(gamesCache[id]);
 });
 
 export const setCurrentGameId = async(id) => {
   if (id === currentGameId || !id) return;
   const playerSocket = await getPlayerSocket();
 
-  if (currentGameId) playerSocket.unsubscribe(`gameCompleted:${currentGameId}`);
-  playerSocket.subscribe(`gameCompleted:${id}`, async({ whiteWon, blackWon, isDraw }) => {
+  if (currentGameId && gamesCache) playerSocket.unsubscribe(`gameCompleted:${currentGameId}`);
+  currentGameId = id;
+  
+  const currentGame = gamesCache[id] || await waitForGameToLoad(id);
+  
+  if (currentGame.status === 'active') playerSocket.subscribe(`gameCompleted:${id}`, async({ whiteWon, blackWon, isDraw }) => {
+    playerSocket.unsubscribe(`gameCompleted:${id}`);
+
     await new Promise(r => setTimeout(r, 250));
     if (blackWon) alert(`Black won.`);
     if (whiteWon) alert(`White won.`);
     if (isDraw) alert(`Game finished in a draw.`);
   });
 
-  currentGameId = id;
-
   const currentGameUpdater = await getCurrentGameUpdater();
-  const currentGame = gamesCache.find(game => game.id === id) || waitForGameToLoad(id);
   currentGameUpdater(currentGame);
 };
 
 (async() => {
   const playerSocket = await getPlayerSocket();
   const games = await playerSocket.do('getGames')
-  gamesCache.push(...games);
+  games.forEach(game => gamesCache[game.id] = game);
 
   playerSocket.subscribe('activeGamePaused', (game) => {
-    gamesCache.splice(gamesCache.findIndex(({ id }) => id === game.id), 1);
+    if (true /* // TODO: if we don't list paused games */) delete gamesCache[game.id];
     playerSocket.unsubscribe(`gameChanged:${game.id}`);
-    setGames(gamesCache.slice());
+    setGames(getSortedGames());
   });
 
   const newActiveHandler = (game) => {
-    gamesCache.unshift(game);
+    gamesCache[game.id] = game;
     playerSocket.subscribe(`gameChanged:${game.id}`, async(newGameState) => {
-      const gamesCacheIndex = gamesCache.findIndex(({ id }) => game.id === id)
-
-      gamesCache[gamesCacheIndex] = newGameState;
+      gamesCache[game.id] = newGameState;
       if (gameLoadedAwaiters[game.id]) gameLoadedAwaiters[game.id].forEach(resolve => resolve(newGameState));
       if (currentGameId === game.id) {
         const currentGameUpdater = await getCurrentGameUpdater();
         currentGameUpdater(newGameState);
       }
-      
-      setGames(gamesCache.slice());
+      setGames(getSortedGames());
     });
-    setGames(gamesCache.slice());
+    setGames(getSortedGames());
   };
 
   playerSocket.subscribe('gameCreated', newActiveHandler);
   playerSocket.subscribe('gameBecameActive', newActiveHandler);
 
   const gamesSetter = await getGamesSetter();
-  gamesSetter(gamesCache);
-  gamesCache.forEach(async(game) => {
-    const { id } = game;
+  gamesSetter(getSortedGames());
+  Object.keys(gamesCache).forEach(async(id) => {
+    const game = gamesCache[id];
     if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(game));
     if (currentGameId === id) {
       const currentGameUpdater = await getCurrentGameUpdater();
@@ -114,14 +122,13 @@ export const setCurrentGameId = async(id) => {
 
     const playerSocket = await getPlayerSocket();
     playerSocket.subscribe(`gameChanged:${id}`, async(newGameState) => {
-      const gamesCacheIndex = gamesCache.findIndex(game => game.id === id)
-      gamesCache[gamesCacheIndex] = newGameState;
+      gamesCache[id] = newGameState;
       if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(newGameState));
       if (currentGameId === id) {
         const currentGameUpdater = await getCurrentGameUpdater();
         currentGameUpdater(newGameState);
       }
-      setGames(gamesCache.slice());
+      setGames(getSortedGames());
     });
   })
 })();
