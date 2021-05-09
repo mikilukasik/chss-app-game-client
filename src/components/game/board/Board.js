@@ -64,6 +64,9 @@ export const Board = () => {
       // if 1st click is not on a white piece, nothing to do
       if (table[colIndex][7 - rowIndex][0] !== 2) return;
       
+      // iphone is funny.. not needed on chrome
+      for (const [x, row] of whiteState.entries()) for (const [y, cell] of row.entries()) cell[15] = false;
+
       cell[9] = true; // selected
       cell[5].forEach(([x, y]) => {
         table[x][y][9] = true; //highlighted

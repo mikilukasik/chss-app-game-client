@@ -57,7 +57,8 @@ export const setCurrentGameId = async(id) => {
   const playerSocket = await getPlayerSocket();
 
   if (currentGameId) playerSocket.unsubscribe(`gameCompleted:${currentGameId}`);
-  playerSocket.subscribe(`gameCompleted:${id}`, ({ whiteWon, blackWon, isDraw }) => {
+  playerSocket.subscribe(`gameCompleted:${id}`, async({ whiteWon, blackWon, isDraw }) => {
+    await new Promise(r => setTimeout(r, 250));
     if (blackWon) alert(`Black won.`);
     if (whiteWon) alert(`White won.`);
     if (isDraw) alert(`Game finished in a draw.`);
@@ -81,7 +82,7 @@ export const setCurrentGameId = async(id) => {
     setGames(gamesCache.slice());
   });
 
-  playerSocket.subscribe('gameCreated', (game) => {
+  const newActiveHandler = (game) => {
     gamesCache.unshift(game);
     playerSocket.subscribe(`gameChanged:${game.id}`, async(newGameState) => {
       const gamesCacheIndex = gamesCache.findIndex(({ id }) => game.id === id)
@@ -96,7 +97,10 @@ export const setCurrentGameId = async(id) => {
       setGames(gamesCache.slice());
     });
     setGames(gamesCache.slice());
-  });
+  };
+
+  playerSocket.subscribe('gameCreated', newActiveHandler);
+  playerSocket.subscribe('gameBecameActive', newActiveHandler);
 
   const gamesSetter = await getGamesSetter();
   gamesSetter(gamesCache);

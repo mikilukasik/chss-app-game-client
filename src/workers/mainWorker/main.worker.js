@@ -6,6 +6,8 @@ import { mainWorkerLogger } from './mainWorkerLogger';
 
 // catch and log errors from this worker
 (async() => {
+  if (typeof self === 'undefined') return;
+
   const workersSocket = msgClient.ws(`ws://${typeof self === 'undefined' || self.location.hostname}:3300/workersSocket`);
   workersSocket.on('init', (data, comms) => {
     comms.send('ok');
