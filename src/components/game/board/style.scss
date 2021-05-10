@@ -48,10 +48,10 @@
 
 @media (min-width: 1000px) {
   .boardContainer {
-    grid-template-rows: 2vh repeat(8, 10.75vh);
+    grid-template-rows: 2vh repeat(8, 10.5vh);
   }
   .boardRow {
-    grid-template-columns: 2vh repeat(8, 10.75vh);
+    grid-template-columns: 2vh repeat(8, 10.5vh);
   }
 }
 
