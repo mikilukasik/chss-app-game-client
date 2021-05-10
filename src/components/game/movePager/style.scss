@@ -1,0 +1,29 @@
+.movePagerContainer {
+  width: 91vw;
+  text-align: center;
+  padding-top: 5px;
+}
+
+@media (min-width: 650px) {
+  .movePagerContainer {
+    width: 66vh;
+  }
+}
+
+@media (min-width: 1000px) {
+  .movePagerContainer {
+    width: 88vh;
+  }
+}
+
+.movePagerButton {
+  margin: 2px;
+}
+
+
+.replayMoveNumber {
+  display: inline-block;
+  margin: 2px;
+  font-weight: 500;
+  width: 40px
+}

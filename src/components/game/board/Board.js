@@ -1,12 +1,14 @@
 import { h } from 'preact';
 import style from './style.scss';
 
-import { useContext, useState } from 'preact/hooks';
+import { useContext, useEffect, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
 import { coordsToMoveString, moveInTable, getHitScores, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
 import { playerSocket } from '../../..';
 import { ProgressBar } from '../progressBar';
 import UserContext from '../../../context/UserContext';
+import { MovePager } from '../movePager';
+import { ReplayBoard } from '../replayBoard';
 
 /* debug */ let started;
 
@@ -21,6 +23,7 @@ export const Board = () => {
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
+  const [replayMoveNumber, setReplayMoveNumber] = useState(-1);
 	const { user: { userId } = {} } = useContext(UserContext);
 
   if (!gameState) return null;
@@ -31,6 +34,10 @@ export const Board = () => {
     for (const [x, row] of table.entries()) for (const [y, cell] of row.entries()) cell[9] = false;
   }
 
+  useEffect(() => {
+    setReplayMoveNumber(-1); // replay off
+  }, [gameState]);
+
   /* debug */ playerSocket.on('displayStats', (stats, comms) => {
   /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
   /* debug */   console.log(convertedStats);
@@ -38,6 +45,12 @@ export const Board = () => {
   /* debug */ });
   /* debug */ window.table = table;
   /* debug */ window.getHitScores = getHitScores;
+
+  if (replayMoveNumber !== -1) {
+    return (<div>
+      <ReplayBoard {...{ replayMoveNumber, setReplayMoveNumber, gameState }} />
+    </div>);
+  };
 
   const whiteState = rotateTable(table);
 
@@ -132,6 +145,7 @@ export const Board = () => {
           </div>
         </div>))}
       </div>))}
+      <MovePager {...{ replayMoveNumber, setReplayMoveNumber, gameState }} />
     </div>
   </div>);
 };
