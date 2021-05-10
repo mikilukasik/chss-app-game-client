@@ -11,14 +11,15 @@ import Home from '../routes/home';
 import Game from '../routes/game';
 import AuthRoute from '../routes/auth';
 import { useUserSetter } from '../services/userService';
-import { useGamesSetter, useCurrentGameUpdater, getPlayerSocket } from '../services/gamesService';
+import { useGamesSetter, useCurrentGameUpdater, getPlayerSocket, useReplayMoveNumberSetter } from '../services/gamesService';
 
 const App = () => {
 	const [games, setGames] = useState();
 	const [gameState, setGameState] = useState();
 	const [scoreBoardData, setScoreBoardData] = useState();
 	const [isNewGameState, setIsNewGameState] = useState();
-  const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState, scoreBoardData, setScoreBoardData };
+  const [replayMoveNumber, setReplayMoveNumber] = useState(-1);
+  const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState, scoreBoardData, setScoreBoardData, replayMoveNumber, setReplayMoveNumber };
 
 	const [user, setUser] = useState();
   const userContext = { user, setUser };
@@ -30,6 +31,10 @@ const App = () => {
 
 		useGamesSetter((games) => {
 			setGames(games);
+		});
+
+		useReplayMoveNumberSetter((rmn) => {
+			setReplayMoveNumber(rmn);
 		});
 
 		let previousId;

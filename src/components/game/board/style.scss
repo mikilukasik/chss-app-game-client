@@ -37,12 +37,12 @@
   }
 }
 
-@media (min-width: 650px) {
+@media (min-width: 610px) {
   .boardContainer {
-    grid-template-rows: 2vh repeat(8, 8vh);
+    grid-template-rows: 2vh repeat(8, 7.3vh);
   }
   .boardRow {
-    grid-template-columns: 2vh repeat(8, 8vh);
+    grid-template-columns: 2vh repeat(8, 7.3vh);
   }
 }
 

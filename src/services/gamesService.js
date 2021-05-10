@@ -12,6 +12,9 @@ const playerSocketAwaiters = [];
 let _currentGameUpdater;
 const currentGameUpdaterAwaiters = [];
 
+let _replayMoveNumberSetter;
+const replayMoveNumberSetterAwaiters = [];
+
 const getSortedGames = () => Object.keys(gamesCache)
   .map(key => gamesCache[key])
   .sort((gameA, gameB) => new Date(gameB.createdAt).getTime() - new Date(gameA.createdAt).getTime())
@@ -51,6 +54,17 @@ export const useCurrentGameUpdater = (currentGameUpdater) => {
   currentGameUpdaterAwaiters.forEach(resolve => resolve(currentGameUpdater));
 };
 
+export const useReplayMoveNumberSetter = (replayMoveNumberSetter) => {
+  _replayMoveNumberSetter = replayMoveNumberSetter;
+  replayMoveNumberSetterAwaiters.forEach(resolve => resolve(replayMoveNumberSetter));
+};
+
+const getReplayMoveNumberSetter = async() => new Promise(resolve => {
+  if (_replayMoveNumberSetter) return resolve(_replayMoveNumberSetter);
+  replayMoveNumberSetterAwaiters.push(resolve);
+});
+
+
 const waitForGameToLoad = async(id) => new Promise(async(resolve) => {
   if (gamesCache[id]) return resolve(gamesCache[id]);
 
@@ -62,6 +76,9 @@ const waitForGameToLoad = async(id) => new Promise(async(resolve) => {
 
 export const setCurrentGameId = async(id) => {
   if (id === currentGameId || !id) return;
+  const replayMoveNumberSetter = await getReplayMoveNumberSetter();
+  replayMoveNumberSetter(-1);
+
   const playerSocket = await getPlayerSocket();
 
   if (currentGameId && gamesCache) playerSocket.unsubscribe(`gameCompleted:${currentGameId}`);

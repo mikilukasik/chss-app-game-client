@@ -19,11 +19,10 @@ for (let x = 0; x < 8; x += 1) {
 }
 
 export const Board = () => {
-  const { gameState, setGameState, isNewGameState, setIsNewGameState } = useContext(GameContext);
+  const { gameState, setGameState, isNewGameState, setIsNewGameState, replayMoveNumber, setReplayMoveNumber } = useContext(GameContext);
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
-  const [replayMoveNumber, setReplayMoveNumber] = useState(-1);
 	const { user: { userId } = {} } = useContext(UserContext);
 
   if (!gameState) return null;
