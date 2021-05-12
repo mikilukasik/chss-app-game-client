@@ -9,9 +9,9 @@ import style from './style.scss';
 // Code-splitting is automated for `routes` directory
 import Home from '../routes/home';
 import Game from '../routes/game';
-import AuthRoute from '../routes/auth';
 import { useUserSetter } from '../services/userService';
 import { useGamesSetter, useCurrentGameUpdater, getPlayerSocket, useReplayMoveNumberSetter } from '../services/gamesService';
+import { LoginModal } from './loginModal';
 
 const App = () => {
 	const [games, setGames] = useState();
@@ -57,8 +57,8 @@ const App = () => {
 				<Router>
 					<Home path="/" />
 					<Game path="/game/" />
-					<AuthRoute path="/auth/:*" />
 				</Router>
+				<LoginModal />
 			</div>
 		</GameContext.Provider></UserContext.Provider>
 	</div>);

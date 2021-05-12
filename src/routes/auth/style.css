@@ -1,7 +1,0 @@
-.authContainer {
-	display: grid;
-  grid-template-rows: 6vh min-content;
-  grid-gap: 1vw;
-  padding: 0 1vw;
-  height: 91vh;
-}
