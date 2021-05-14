@@ -5,13 +5,14 @@ import { route } from 'preact-router';
 import { playerSocket } from '../../..';
 import UserContext from '../../../context/UserContext';
 import { setCurrentGameId } from '../../../services/gamesService';
+import { showLoginModal } from '../../loginModal';
 
 export const NewGameButton = () => {
 	const { user } = useContext(UserContext);
 
   const newGameClickHandler = () => {
     if (!user) {
-      route('/auth/guest', true); // TODO: pass return url
+      showLoginModal();
       return;
     }
 
