@@ -38,12 +38,11 @@ export const Board = () => {
   }, [gameState]);
 
   /* debug */ playerSocket.on('displayStats', (stats, comms) => {
-  /* debug */   const convertedStats = stats.map(stat => Object.assign({}, stat, { moveTree: stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m)}))
-  /* debug */   console.log(convertedStats);
+  /* debug */   const converted = stats
+  /* debug */     .map(stat => `${stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m.toString().padStart(5)).join(' ')} ${stat.value.toString().padStart(5)}`);
+  /* debug */   console.log(`\n\n%c${converted.join('\n%c')}`, ...converted.map((l, i) => i % 2 ? 'background: #ddd' : ''));
   /* debug */   comms.send('ok');
   /* debug */ });
-  /* debug */ window.table = table;
-  /* debug */ window.getHitScores = getHitScores;
 
   if (replayMoveNumber !== -1) {
     return (<div>
