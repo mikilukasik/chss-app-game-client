@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { authSocket } from '../..';
+import { getAuthSocket } from '../..';
 
 import Dialog from 'preact-material-components/Dialog';
 import TextField from 'preact-material-components/TextField';
@@ -34,8 +34,9 @@ export const LoginModal = () => {
 
 	const onGuestNameChange = ({ target: { value } }) => setGuestName(value);
 
-	const onLoginClick = () => {
+	const onLoginClick = async() => {
 		setError(null);
+		const authSocket = await getAuthSocket();
 		authSocket.do('guestLogin', { username: guestName })
 			.then(() => showLoginModal(false))
 			.catch(setError)

@@ -8,7 +8,7 @@ import { mainWorkerLogger } from './mainWorkerLogger';
 (async() => {
   if (typeof self === 'undefined') return;
 
-  const workersSocket = msgClient.ws(`ws://${typeof self === 'undefined' || self.location.hostname}:3300/workersSocket`);
+  const workersSocket = msgClient.ws(`ws://${self.location.hostname}:3300/workersSocket`);
   workersSocket.on('init', (data, comms) => {
     comms.send('ok');
   });

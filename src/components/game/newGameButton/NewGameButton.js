@@ -2,20 +2,20 @@ import { h } from 'preact';
 import style from './style.scss';
 import { useContext } from 'preact/hooks';
 import { route } from 'preact-router';
-import { playerSocket } from '../../..';
 import UserContext from '../../../context/UserContext';
-import { setCurrentGameId } from '../../../services/gamesService';
+import { getPlayerSocket, setCurrentGameId } from '../../../services/gamesService';
 import { showLoginModal } from '../../loginModal';
 
 export const NewGameButton = () => {
 	const { user } = useContext(UserContext);
 
-  const newGameClickHandler = () => {
+  const newGameClickHandler = async() => {
     if (!user) {
       showLoginModal();
       return;
     }
 
+    const playerSocket = await getPlayerSocket();
 		playerSocket.do('newGame', {
       user,
       againstComputer: true,

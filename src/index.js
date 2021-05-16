@@ -7,18 +7,31 @@ import { ensureClientIdCookie } from './services/cookieService';
 import { setUser } from './services/userService';
 import { usePlayerSocket } from './services/gamesService';
 
-ensureClientIdCookie();
+let _authSocket;
+const authSocketAwaiters = [];
 
-export const logger = clientLogger({ msgClient });
-
-export const authSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/authSocket`);
-authSocket.on('setUser', (user, comms) => {
-  setUser(user);
-  comms.send('ok');
+export const getAuthSocket = () => new Promise(resolve => {
+  if (_authSocket) return resolve(_authSocket);
+  authSocketAwaiters.push(resolve);
 });
 
-export const playerSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/playerSocket`);
-usePlayerSocket(playerSocket);
+(() => {
+if (typeof self === 'undefined') return;
+  ensureClientIdCookie();
 
-initWorkers();
+  const authSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/authSocket`);
+  authSocket.on('setUser', (user, comms) => {
+    setUser(user);
+    comms.send('ok');
+  });
+  _authSocket = authSocket;
+  authSocketAwaiters.forEach(r => r(authSocket));
+
+  const playerSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/playerSocket`);
+  usePlayerSocket(playerSocket);
+
+  initWorkers();
+
+})();
+
 export default App;
