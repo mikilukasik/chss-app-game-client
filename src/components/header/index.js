@@ -11,6 +11,7 @@ const Header = () => {
 	return (<header class={style.header}>
 		<h1>CHSS</h1>
 		<nav>
+			{user && user.isAdmin && <Link activeClassName={style.active} href="/admin">Admin</Link>}
 			{
 				user
 					? <Link activeClassName={style.active} href={`/profiles/${user.username}`}>{user.username}</Link>

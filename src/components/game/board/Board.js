@@ -3,13 +3,13 @@ import style from './style.scss';
 
 import { useContext, useEffect, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { coordsToMoveString, moveInTable, getHitScores, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
-// import { playerSocket } from '../../..';
+import { coordsToMoveString, moveInTable, singleThreadAi, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
 import { ProgressBar } from '../progressBar';
 import UserContext from '../../../context/UserContext';
 import { MovePager } from '../movePager';
 import { ReplayBoard } from '../replayBoard';
 import { getPlayerSocket } from '../../../services/gamesService';
+import AdminContext from '../../../context/AdminContext';
 
 /* debug */ let started;
 
@@ -25,6 +25,7 @@ export const Board = () => {
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
 	const { user: { userId } = {} } = useContext(UserContext);
+  const { localSingleThreadAi } = useContext(AdminContext);
 
   if (!gameState) return null;
   const { table } = gameState;
@@ -38,14 +39,20 @@ export const Board = () => {
     setReplayMoveNumber(-1); // replay off
   }, [gameState]);
 
+  /* debug */
+  /* debug */ const displayStats = (stats) => {
+  /* debug */   const converted = stats
+  /* debug */     .map(stat => `${stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m.toString().padStart(5)).join(' ')} ${stat.value.toString().padStart(5)}`);
+  /* debug */   console.log(`\n\n%c${converted.join('\n%c')}`, ...converted.map((l, i) => i % 2 ? 'background: #ddd' : ''));
+  /* debug */ }
+  /* debug */
   /* debug */ getPlayerSocket().then(playerSocket => {
   /* debug */   playerSocket.on('displayStats', (stats, comms) => {
-  /* debug */     const converted = stats
-  /* debug */       .map(stat => `${stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m.toString().padStart(5)).join(' ')} ${stat.value.toString().padStart(5)}`);
-  /* debug */     console.log(`\n\n%c${converted.join('\n%c')}`, ...converted.map((l, i) => i % 2 ? 'background: #ddd' : ''));
+  /* debug */     displayStats(stats);
   /* debug */     comms.send('ok');
   /* debug */   });
   /* debug */ });
+  /* debug */
   
 
   if (replayMoveNumber !== -1) {
@@ -122,16 +129,17 @@ export const Board = () => {
     /* debug */ started = Date.now();
 
     const playerSocket = await getPlayerSocket();
-    playerSocket.do('updateGame', nextGameState, dataHandler)
+    playerSocket.do('updateGame', { game: nextGameState, aiToRespond: !localSingleThreadAi, userId }, dataHandler)
       /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);
 
     // The below makes a computer move calculated locally
-    // setTimeout(() => {
-    //   const { moveCoords } = singleThreadAi(nextGameState, 3)
-    //   setGameState(Object.assign({}, moveInTable(moveCoords, nextGameState)));
-    // }, 0);
+    if (localSingleThreadAi) setTimeout(() => {
+      const { moveCoords, result } = singleThreadAi(nextGameState, 4);
+      displayStats(result);
+      playerSocket.do('updateGame', { game: moveInTable(moveCoords, nextGameState), aiToRespond: false, userId });
+    }, 0);
   };
 
   return (<div>
