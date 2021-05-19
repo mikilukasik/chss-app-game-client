@@ -9,8 +9,8 @@
 .selected2 {
   animation: background-fade 3s forwards;
   @keyframes background-fade {
-    0% { background-color:rgba(255,153,0,0.75); }
-    100% { }
+    0% { background-color:rgba(255,153,0,0.8); }
+    100% { background-color:rgba(255,153,0,0.4); }
   }
 }
 
