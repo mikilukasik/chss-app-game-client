@@ -2,19 +2,20 @@ import { h } from 'preact';
 import { useContext } from 'preact/hooks';
 import style from './style.css';
 import UserContext from '../../context/UserContext';
-import AdminContext from '../../context/AdminContext';
+import { persistUserSettings } from '../../services/userService';
 
 export const Admin = () => {
-  const { user } = useContext(UserContext);
+  const { user, userSettings, setUserSettings } = useContext(UserContext);
 	if (!user || !user.isAdmin) return;
 
-  const { localSingleThreadAi, setLocalSingleThreadAi } = useContext(AdminContext);
-
-	const onLocalSingleThreadAiChange = ({ target: { checked }}) => setLocalSingleThreadAi(checked);
+	const onLocalSingleThreadAiChange = ({ target: { checked }}) => {
+		setUserSettings({ ...userSettings, useLocalSingleThreadAi: checked });
+		persistUserSettings({ useLocalSingleThreadAi: checked });
+	};
 
 	return (<div>
 		<label>
-			<input type="checkbox" checked={localSingleThreadAi} onChange={onLocalSingleThreadAiChange} />
+			<input type="checkbox" checked={userSettings.useLocalSingleThreadAi} onChange={onLocalSingleThreadAiChange} />
 			Local single thread move calculation
 		</label>
 	</div>);

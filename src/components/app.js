@@ -2,7 +2,6 @@ import { h } from 'preact';
 import { route, Router } from 'preact-router';
 import GameContext from '../context/GameContext';
 import UserContext from '../context/UserContext';
-import AdminContext from '../context/AdminContext';
 import { useEffect, useState } from 'preact/hooks';
 import Header from './header';
 import style from './style.scss';
@@ -11,7 +10,7 @@ import style from './style.scss';
 import Home from '../routes/home';
 import Game from '../routes/game';
 import Admin from '../routes/admin';
-import { useUserSetter } from '../services/userService';
+import { useUserSetter, useUserSettingsSetter } from '../services/userService';
 import { useGamesSetter, useCurrentGameUpdater, getPlayerSocket, useReplayMoveNumberSetter } from '../services/gamesService';
 import { LoginModal } from './loginModal';
 
@@ -24,14 +23,16 @@ const App = () => {
   const gameContext = { gameState, setGameState, games, setGames, isNewGameState, setIsNewGameState, scoreBoardData, setScoreBoardData, replayMoveNumber, setReplayMoveNumber };
 
 	const [user, setUser] = useState();
-  const userContext = { user, setUser };
-
-	const [localSingleThreadAi, setLocalSingleThreadAi] = useState(false);
-	const adminContext = { localSingleThreadAi, setLocalSingleThreadAi };
+	const [userSettings, setUserSettings] = useState({});
+  const userContext = { user, setUser, userSettings, setUserSettings };
 
 	useEffect(async() => {
 		useUserSetter((user) => {
 			setUser(user);
+		});
+
+		useUserSettingsSetter((settings) => {
+			setUserSettings(settings);
 		});
 
 		useGamesSetter((games) => {
@@ -56,7 +57,7 @@ const App = () => {
 	}, []);
 
 	return (<div id="app" className={style.appContainer}>
-		<UserContext.Provider value={userContext}><GameContext.Provider value={gameContext}><AdminContext.Provider value={adminContext}>
+		<UserContext.Provider value={userContext}><GameContext.Provider value={gameContext}>
 			<Header />
 			<div id="main-content" className={style.mainContent}>
 				<Router>
@@ -66,7 +67,7 @@ const App = () => {
 				</Router>
 				<LoginModal />
 			</div>
-			</AdminContext.Provider></GameContext.Provider></UserContext.Provider>
+		</GameContext.Provider></UserContext.Provider>
 	</div>);
 };
 

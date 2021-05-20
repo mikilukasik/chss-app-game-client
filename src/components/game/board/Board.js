@@ -9,7 +9,6 @@ import UserContext from '../../../context/UserContext';
 import { MovePager } from '../movePager';
 import { ReplayBoard } from '../replayBoard';
 import { getPlayerSocket } from '../../../services/gamesService';
-import AdminContext from '../../../context/AdminContext';
 
 /* debug */ let started;
 
@@ -24,8 +23,7 @@ export const Board = () => {
   const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
-	const { user: { userId } = {} } = useContext(UserContext);
-  const { localSingleThreadAi } = useContext(AdminContext);
+	const { user: { userId } = {}, userSettings } = useContext(UserContext);
 
   if (!gameState) return null;
   const { table } = gameState;
@@ -129,13 +127,13 @@ export const Board = () => {
     /* debug */ started = Date.now();
 
     const playerSocket = await getPlayerSocket();
-    playerSocket.do('updateGame', { game: nextGameState, aiToRespond: !localSingleThreadAi, userId }, dataHandler)
+    playerSocket.do('updateGame', { game: nextGameState, aiToRespond: !userSettings.useLocalSingleThreadAi, userId }, dataHandler)
       /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);
 
     // The below makes a computer move calculated locally
-    if (localSingleThreadAi) setTimeout(() => {
+    if (userSettings.useLocalSingleThreadAi) setTimeout(() => {
       const { moveCoords, result } = singleThreadAi(nextGameState, 4);
       displayStats(result);
       playerSocket.do('updateGame', { game: moveInTable(moveCoords, nextGameState), aiToRespond: false, userId });
