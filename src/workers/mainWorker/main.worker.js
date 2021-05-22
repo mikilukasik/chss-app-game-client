@@ -27,6 +27,6 @@ import { mainWorkerLogger } from './mainWorkerLogger';
   const { getNextAvailableWorker } = createSubWorkerPool();
 
   workersSocket.on('solveSmallMoveTask', async(smallMoveTask, comms) => {
-    solveSmallMoveTaskOnSubWorkers({ smallMoveTask, getNextAvailableWorker }).then(comms.send);
+    solveSmallMoveTaskOnSubWorkers({ smallMoveTask, getNextAvailableWorker }).then(comms.send).catch(comms.error);
   });
 })();

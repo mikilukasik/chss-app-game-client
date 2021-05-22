@@ -1,9 +1,9 @@
 .darker {
-  background-color: silver;
+  background-color: #bb815f;
 }
 
 .square {
-  background-color: white;
+  background-color: #f9e2bf;
 }
 
 .selected2 {
@@ -23,14 +23,14 @@
   padding: 10px;
   box-shadow: 4px 4px 3px #aaa;
   display: grid;
-  grid-template-rows: 3vw repeat(8, 11vw);
+  grid-template-rows: 20px repeat(8, 11vw);
   grid-area: board;
   font-size: 0.6rem;
 }
 
 .boardRow {
   display: grid;
-  grid-template-columns: 3vw repeat(8, 11vw);
+  grid-template-columns: 20px repeat(8, 11vw);
   img {
     max-width:100%;
     max-height:100%;
@@ -39,19 +39,19 @@
 
 @media (min-width: 610px) {
   .boardContainer {
-    grid-template-rows: 2vh repeat(8, 7.3vh);
+    grid-template-rows: 20px repeat(8, 7.3vh);
   }
   .boardRow {
-    grid-template-columns: 2vh repeat(8, 7.3vh);
+    grid-template-columns: 20px repeat(8, 7.3vh);
   }
 }
 
 @media (min-width: 1000px) {
   .boardContainer {
-    grid-template-rows: 2vh repeat(8, 10.5vh);
+    grid-template-rows: 20px repeat(8, 10.5vh);
   }
   .boardRow {
-    grid-template-columns: 2vh repeat(8, 10.5vh);
+    grid-template-columns: 20px repeat(8, 10.5vh);
   }
 }
 
@@ -65,5 +65,6 @@
   vertical-align: middle;
   text-align: center;
   display: table-cell;
-  background-color: #ccc;
+  background-color: #efd2af;
+  padding-top: 4px;
 }
