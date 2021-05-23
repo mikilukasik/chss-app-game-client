@@ -18,9 +18,9 @@
 }
 
 .boardContainer {
-  background-color: #fff;
+  background-color: #3e3838;
   padding: 10px;
-  box-shadow: 0px 0px 5px #aaa;
+  box-shadow: 0px 0px 5px #504c4c;
   display: grid;
   grid-template-rows: repeat(8, 2vh);
   grid-area: board;
@@ -48,6 +48,7 @@
   display: table-cell;
   background-color: #efd2af;
   padding-top: 4px;
+  color: #403e3e;
 }
 
 .boardLabel {

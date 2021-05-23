@@ -1,4 +1,4 @@
-import { solveDeepeningTaskOnNN } from '../../../../chss-module-engine/src/engine/ai';
+import { getValueFromNN, solveDeepeningTaskOnNN } from '../../../../chss-module-engine/src/engine/ai';
 import { solveDeepeningTask, tableToAptString } from '../../../chss-module-engine/src/engine/engine';
 
 (async() => {
@@ -17,6 +17,9 @@ import { solveDeepeningTask, tableToAptString } from '../../../chss-module-engin
             ? data.score + 6000
             : data.score - 6000;
         }
+
+        const valueFromNN = getValueFromNN(data);
+        data.score += valueFromNN * 500;
 
         postMessage(solveDeepeningTask(data, true));
       } catch (e) {

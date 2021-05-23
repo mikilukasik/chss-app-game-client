@@ -14,7 +14,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
     tempResolveArray[2] = res
     tempResolveArray[3] = []
 
-    resolveDepth(2, tempResolveArray)
+    resolveDepth(2, tempResolveArray, smallMoveTask.currentBests, undefined, deepeningTask)
     const pushAgain = tempResolveArray[1][0]
     if (!pushAgain) {
       // opponent has no moves, check if it's a win

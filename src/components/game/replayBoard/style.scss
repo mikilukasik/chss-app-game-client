@@ -19,9 +19,9 @@
 }
 
 .boardContainer {
-  background-color: #fff;
+  background-color: #3e3838;
   padding: 10px;
-  box-shadow: 4px 4px 3px #aaa;
+  box-shadow: 4px 4px 3px #504c4c;
   display: grid;
   grid-template-rows: 20px repeat(8, 11vw);
   grid-area: board;
@@ -37,7 +37,7 @@
   }
 }
 
-@media (min-width: 610px) {
+@media (min-width: 530px) {
   .boardContainer {
     grid-template-rows: 20px repeat(8, 7.3vh);
   }
@@ -67,4 +67,5 @@
   display: table-cell;
   background-color: #efd2af;
   padding-top: 4px;
+  color: #403e3e;
 }
