@@ -1,3 +1,13 @@
+import { generateLegalMoves } from "../../../chss-module-engine/src/engine_new/moveGenerators/generateLegalMoves";
+import { generatePseudoMoves } from "../../../chss-module-engine/src/engine_new/moveGenerators/generatePseudoMoves";
+import { isCaptured } from "../../../chss-module-engine/src/engine_new/utils/isCaptured";
+import { toFen } from "../../chss-module-engine/src/engine/engine";
+import { fen2intArray } from "../../chss-module-engine/src/engine_new/transformers/fen2intArray";
+import { getLegalMoveCount } from "../../chss-module-engine/src/engine_new/testUtils/getLegalMoveCount";
+import { getMovedBoard } from "../../chss-module-engine/src/engine_new/utils/getMovedBoard";
+import { getLegalMoveCountThrowMethod } from "../../chss-module-engine/src/engine_new/testUtils/getLegalMoveCountThrowMethod";
+
+
 const gamesCache = {};
 const gameLoadedAwaiters = {};
 
@@ -113,6 +123,10 @@ export const setCurrentGameId = async(id) => {
   const newActiveHandler = (game) => {
     gamesCache[game.id] = game;
     playerSocket.subscribe(`gameChanged:${game.id}`, async(newGameState) => {
+
+      testLog(newGameState)
+
+
       gamesCache[game.id] = newGameState;
       if (gameLoadedAwaiters[game.id]) gameLoadedAwaiters[game.id].forEach(resolve => resolve(newGameState));
       if (currentGameId === game.id) {
@@ -139,6 +153,9 @@ export const setCurrentGameId = async(id) => {
 
     const playerSocket = await getPlayerSocket();
     playerSocket.subscribe(`gameChanged:${id}`, async(newGameState) => {
+
+      testLog(newGameState);
+
       gamesCache[id] = newGameState;
       if (gameLoadedAwaiters[id]) gameLoadedAwaiters[id].forEach(resolve => resolve(newGameState));
       if (currentGameId === id) {
@@ -149,3 +166,59 @@ export const setCurrentGameId = async(id) => {
     });
   })
 })();
+
+const moveTransformer = moves => Array.from(moves).map(x => `${x >> 6} -> ${x & 63}`).join(', ');
+
+window.test = {
+  moveTransformer,
+  generateLegalMoves,
+  getLegalMoveCount,
+  getLegalMoveCountThrowMethod,
+  fen2intArray,
+  getMovedBoard,
+  glmctm: (depth, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -') => {
+    const started = Date.now();
+    console.log(getLegalMoveCountThrowMethod(fen2intArray(fen), depth));
+    console.log(`${Date.now() - started}ms`);
+  },
+  glmc: (depth, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -') => {
+    const started = Date.now();
+    console.log(getLegalMoveCount(fen2intArray(fen), depth));
+    console.log(`${Date.now() - started}ms`);
+  },
+  testDepth: (fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -', d = 4) => {
+    const started = Date.now();
+    for (let depth = 1; depth < d + 1; depth += 1) {
+      const depthStarted = Date.now();
+      console.log(getLegalMoveCountThrowMethod(fen2intArray(fen), depth).toString().padEnd(15), `${Date.now() - depthStarted}ms`);
+    }
+    console.log(`total: ${Date.now() - started}ms`);
+  },
+  perft: (fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -') => {
+    const started = Date.now();
+    for (let depth = 1; depth < 5; depth += 1) {
+      const depthStarted = Date.now();
+      console.log(getLegalMoveCount(fen2intArray(fen), depth).toString().padEnd(15), `${Date.now() - depthStarted}ms`);
+    }
+    console.log(`total: ${Date.now() - started}ms`);
+  },
+};
+
+const testLog = (game) => {
+  const fen = toFen(game);
+  const board = fen2intArray(fen);
+  const pseudoMoves = generatePseudoMoves(board);
+  
+  const legalMoves = generateLegalMoves(board);
+  const captured = isCaptured(board, board.indexOf((board[64] << 3) + 6), board[64]);
+
+  console.log({
+    // fen,
+    board,
+    // p: moveTransformer(pseudoMoves),
+    // l: moveTransformer(legalMoves),
+    pl: pseudoMoves.length,
+    ll: legalMoves.length,
+    // captured
+  })
+};
