@@ -10,7 +10,7 @@ export const createSubWorkerPool = () => {
 
   const init = async() => {
     for (let i = getHardwareConcurrency(); i > 0; i -= 1) subWorkerPool.push(SubWorker());
-  
+
     // init them with hello
     await Promise.all(subWorkerPool.map(worker => new Promise(resolve => {
       worker.onmessage = resolve;

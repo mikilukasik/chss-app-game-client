@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useContext } from 'preact/hooks';
 import UserContext from '../../../context/UserContext';
-import { getPlayerSocket, setCurrentGameId } from '../../../services/gamesService';
+import { startCustomGame } from '../../../services/gamesService';
 import style from './style.scss';
 
 export const MovePager = ({ replayMoveNumber, setReplayMoveNumber, gameState }) => {
@@ -9,10 +9,8 @@ export const MovePager = ({ replayMoveNumber, setReplayMoveNumber, gameState }) 
 
   const getClickHandler = (moveNumebr) => () => setReplayMoveNumber(moveNumebr);
 
-  const newGameFromHereHandler = async() => {
-    const playerSocket = await getPlayerSocket();
-    const { gameId } = await playerSocket.do('newCustomGame', { tableString: gameState.allPastTables[replayMoveNumber], wNext: replayMoveNumber % 2 === 0, user });
-    setCurrentGameId(gameId);
+  const newGameFromHereHandler = async() => { //
+    startCustomGame(gameState.allPastFens[replayMoveNumber]);
   };
 
   return (<div className={style.movePagerContainer}>

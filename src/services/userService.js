@@ -35,6 +35,7 @@ export const useUserSetter = (userSetter) => {
   userSetterAwaiters.forEach(resolve => resolve(userSetter));		
 };
 
+export const getUser = () => _user;
 
 export const useUserSettingsSetter = (userSettingsSetter) => {
   _userSettingsSetter = userSettingsSetter;

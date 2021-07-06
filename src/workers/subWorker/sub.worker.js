@@ -1,5 +1,4 @@
-import { getValueFromNN, solveDeepeningTaskOnNN } from '../../../../chss-module-engine/src/engine/ai';
-import { solveDeepeningTask, tableToAptString } from '../../../chss-module-engine/src/engine/engine';
+import { evaluateMove } from '../../../chss-module-engine/src/engine_new/evaluators/evaluateMove';
 
 (async() => {
   onmessage = ({ data }) => {
@@ -8,20 +7,8 @@ import { solveDeepeningTask, tableToAptString } from '../../../chss-module-engin
 
     onmessage = ({ data }) => {
       try {
-        const secondMovedTableApt = tableToAptString(data.table);
-        const wouldLoop = data.repeatedPastTables.includes(secondMovedTableApt);
-        
-        if (wouldLoop) {
-          console.log('it would loop', data.repeatedPastTables)
-          data.score = data.shouldIDraw
-            ? data.score + 6000
-            : data.score - 6000;
-        }
-
-        const valueFromNN = getValueFromNN(data);
-        data.score += valueFromNN * 500;
-
-        postMessage(solveDeepeningTask(data, true));
+        const result = evaluateMove(data, true);
+        postMessage(result);
       } catch (e) {
         if (e !== 'illegal') throw e;
 

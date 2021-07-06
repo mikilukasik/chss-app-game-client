@@ -1,3 +1,5 @@
+import { getUser } from "./userService";
+
 const gamesCache = {};
 const gameLoadedAwaiters = {};
 
@@ -14,6 +16,14 @@ const currentGameUpdaterAwaiters = [];
 
 let _replayMoveNumberSetter;
 const replayMoveNumberSetterAwaiters = [];
+
+let currentGameState;
+
+export const setCurrentGameState = (gameState) => {
+  currentGameState = gameState;
+};
+
+export const getCurrentGameState = () => currentGameState;
 
 const getSortedGames = () => Object.keys(gamesCache)
   .map(key => gamesCache[key])
@@ -149,3 +159,10 @@ export const setCurrentGameId = async(id) => {
     });
   })
 })();
+
+export const startCustomGame = async(fen) => {
+  const playerSocket = await getPlayerSocket();
+  const user = getUser();
+  const { gameId } = await playerSocket.do('newCustomGame', { fen, user });
+  setCurrentGameId(gameId);
+};

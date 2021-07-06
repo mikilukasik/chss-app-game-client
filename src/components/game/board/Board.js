@@ -3,12 +3,15 @@ import style from './style.scss';
 
 import { useContext, useEffect, useState } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { coordsToMoveString, moveInTable, singleThreadAi, rotateTable } from '../../../../chss-module-engine/src/engine/engine';
+import { moveInBoard } from '../../../../chss-module-engine/src/engine/engine';
 import { ProgressBar } from '../progressBar';
 import UserContext from '../../../context/UserContext';
 import { MovePager } from '../movePager';
 import { ReplayBoard } from '../replayBoard';
-import { getPlayerSocket } from '../../../services/gamesService';
+import { getPlayerSocket, setCurrentGameState } from '../../../services/gamesService';
+import { toNested } from '../../../utils/toNested';
+import { move2moveString } from '../../../../../chss-module-engine/src/engine_new/transformers/move2moveString';
+import { getPieceBalance } from '../../../../chss-module-engine/src/engine_new/evaluators/evaluateBoard';
 
 /* debug */ let started;
 
@@ -20,17 +23,20 @@ for (let x = 0; x < 8; x += 1) {
 
 export const Board = () => {
   const { gameState, setGameState, isNewGameState, setIsNewGameState, replayMoveNumber, setReplayMoveNumber } = useContext(GameContext);
-  const [firstClickedCellAddress, setFirstClickedCellAddress] = useState();
+  const [moveSourceCell, setMoveSourceCell] = useState();
+  const [movePotentialTargetCells, setMovePotentialTargetCells] = useState([]);
   const [progressTotal, setProgressTotal] = useState();
   const [progressCompleted, setProgressCompleted] = useState();
 	const { user: { userId } = {}, userSettings } = useContext(UserContext);
 
   if (!gameState) return null;
-  const { table } = gameState;
+  setCurrentGameState(gameState);
+
+  const { board, nextMoves, bitBoard: _bitBoard } = gameState;
 
   if (isNewGameState) {
-    setFirstClickedCellAddress(null);
-    for (const [x, row] of table.entries()) for (const [y, cell] of row.entries()) cell[9] = false;
+    setMoveSourceCell(null);
+    setMovePotentialTargetCells([]);
   }
 
   useEffect(() => {
@@ -40,7 +46,7 @@ export const Board = () => {
   /* debug */
   /* debug */ const displayStats = (stats) => {
   /* debug */   const converted = stats
-  /* debug */     .map(stat => `${stat.moveTree.map(m => Array.isArray(m) ? coordsToMoveString(...m) : m.toString().padStart(5)).join(' ')} ${stat.value.toString().padStart(5)}`);
+  /* debug */     .map(stat => `${(stat.score /* - stat.aiValue */).toFixed(5).padStart(8)} ${stat.moveTree.filter(Boolean).map(m => move2moveString(m)).join(' ')}`);
   /* debug */   console.log(`\n\n%c${converted.join('\n%c')}`, ...converted.map((l, i) => i % 2 ? 'background: #ddd' : ''));
   /* debug */ }
   /* debug */
@@ -59,61 +65,34 @@ export const Board = () => {
     </div>);
   };
 
-  const whiteState = rotateTable(table);
+  const nestedBoard = toNested(board);
 
-  for (const [x, row] of whiteState.entries()) for (const [y, cell] of row.entries()) {
-    if (!isNewGameState && (cell[0] !== previosTable[x][y][0] || cell[0] !== previosTable[x][y][0])) cell[15] = true; // highlight if changed
-    previosTable[x][y] = [cell[0], cell[1]];
-  }
   setIsNewGameState(false);
 
-  const clearHighlights = (game) => Object.assign({}, game, {
-    table: game.table.map(row => row.map(cell => Object.assign({}, cell, { 9: null })))
-  });
+  const nestedMoves = nextMoves.reduce((p, c) => {
+    const sourceIndex = c >>> 10;
+    const targetIndex = c & 63;
+    p[sourceIndex] = (p[sourceIndex] || []).concat(targetIndex);
+    return p;
+  }, {});
 
-  const cellClickHandler = async(rowIndex, colIndex, cell) => {
-    if (
-      gameState.completed ||
-      !(
-        gameState.wNext && userId === gameState.wPlayer ||
-        !gameState.wNext && userId === gameState.bPlayer
-      )
-    ) return;
 
-    if (!firstClickedCellAddress) {
-      // if 1st click is not on a white piece, nothing to do
-      if (table[colIndex][7 - rowIndex][0] !== 2) return;
-      
-      // iphone is funny.. not needed on chrome
-      for (const [x, row] of whiteState.entries()) for (const [y, cell] of row.entries()) cell[15] = false;
+  const clearMoveSourceCell = () => {
+    setMoveSourceCell(null);
+    setMovePotentialTargetCells([]);
+  };
 
-      cell[9] = true; // selected
-      cell[5].forEach(([x, y]) => {
-        table[x][y][9] = true; //highlighted
-      })
-      setFirstClickedCellAddress({ rowIndex, colIndex });
-      return;
-    }
+  const makeMove = async(move) => {
 
-    const moveToMake = [
-      firstClickedCellAddress.colIndex,
-      7 - firstClickedCellAddress.rowIndex,
-      colIndex,
-      7 - rowIndex
-    ];
 
-    // if 2nd click is on a non-highlighted cell, nothing to do
-    if (!table[moveToMake[2]][moveToMake[3]][9]) return;
 
-    if (moveToMake[0] === moveToMake[2] && moveToMake[1] === moveToMake[3]) {
-      setFirstClickedCellAddress(null);
-      setGameState(clearHighlights(gameState));
-      return;
-    }
+    const nextGameState = moveInBoard(move, gameState);
 
-    const nextGameState = moveInTable(moveToMake, gameState);
+    nextGameState.pieceBalance = getPieceBalance(nextGameState.board);
+
+
     setGameState(nextGameState);
-    setFirstClickedCellAddress(null);
+    clearMoveSourceCell();
 
     const progressHandler = ({ progress: p }) => {
       setProgressTotal(p.total);
@@ -131,13 +110,6 @@ export const Board = () => {
       /* debug */ .then(() => console.log(`move took ${Date.now() - started}ms`))
       .catch(console.error)
       .then(setProgressCompleted);
-
-    // The below makes a computer move calculated locally
-    if (userSettings.useLocalSingleThreadAi) setTimeout(() => {
-      const { moveCoords, result } = singleThreadAi(nextGameState, 4);
-      displayStats(result);
-      playerSocket.do('updateGame', { game: moveInTable(moveCoords, nextGameState), aiToRespond: false, userId });
-    }, 0);
   };
 
   return (<div>
@@ -147,13 +119,58 @@ export const Board = () => {
         <div className={style.boardHeadingCell}> </div>
         {'ABCDEFGH'.split('').map((letter, i) => <div key={i} className={style.boardHeadingCell}>{letter}</div>)}
       </div>
-      {whiteState.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
+      {nestedBoard.map((row, rowIndex) => (<div key={rowIndex} className={style.boardRow}>
         <div className={style.boardHeadingCellWrapper}><div className={style.boardHeadingCell}>{8 - rowIndex}</div></div>
-        {row.map((cell, colIndex) => (<div key={colIndex} className={(rowIndex + colIndex) & 1  ? style.darker : style.square}>
-          <div onClick={() => cellClickHandler(rowIndex, colIndex, cell)}>
-            <img src={`/assets/pieces/${cell[0]}${cell[1]}.png`} className={`${cell[8] || cell[9] ? style.selected : ''} ${cell[15] ? style.selected2 : ''}`} />
-          </div>
-        </div>))}
+        {row.map((cell, colIndex) => {
+          const cellIndex = rowIndex * 8 + colIndex;
+          const moveTargets = nestedMoves[cellIndex];
+          
+          const onDragStart = moveTargets && ((e) => {
+            setMoveSourceCell(cellIndex);
+            setMovePotentialTargetCells(moveTargets);
+          });
+
+          const isPotentialTarget = movePotentialTargetCells.includes(cellIndex);
+
+          const onDragOver = (e) => {
+            e.preventDefault();
+          };
+
+          const moveToThisCell = () => {
+            // TODO: deal with underpromotion here
+            const move = (moveSourceCell << 10) + cellIndex;
+            makeMove(move);
+          };
+
+          const onDrop = isPotentialTarget
+            ? moveToThisCell
+            : () => {};
+
+          const cellClickHandler = () => {
+            if (moveSourceCell === cellIndex) {
+              clearMoveSourceCell();
+              return;
+            }
+
+            if (!moveSourceCell) {
+              if (onDragStart) onDragStart();
+              return;
+            }
+
+            if (movePotentialTargetCells.includes(cellIndex)) {
+              moveToThisCell();
+              return;
+            }
+          }
+
+          const selectedClass = moveSourceCell === cellIndex || isPotentialTarget ? style.selected : '';
+
+          return (<div key={colIndex} className={(rowIndex + colIndex) & 1  ? style.darker : style.square}>
+            <div onDragOver={onDragOver} onDrop={onDrop} onClick={cellClickHandler}>
+              <img src={`/assets/pieces/${cell}.png`} draggable={moveTargets} onDragStart={onDragStart} className={`${selectedClass} ${' ' || (cell[15] ? style.selected2 : '')}`} />
+            </div>
+          </div>);
+        })}
       </div>))}
       <MovePager {...{ replayMoveNumber, setReplayMoveNumber, gameState }} />
     </div>

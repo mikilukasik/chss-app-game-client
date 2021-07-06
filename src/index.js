@@ -6,6 +6,7 @@ import { clientLogger } from '../chss-module-logger';
 import { ensureClientIdCookie } from './services/cookieService';
 import { setUser } from './services/userService';
 import { usePlayerSocket } from './services/gamesService';
+import { debugService } from './services/debugService';
 
 let _authSocket;
 const authSocketAwaiters = [];
@@ -32,6 +33,7 @@ if (typeof self === 'undefined') return;
 
   initWorkers();
 
+  debugService();
 })();
 
 export default App;
