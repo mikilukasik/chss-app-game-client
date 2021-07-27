@@ -15,6 +15,23 @@ import { getPieceBalance } from '../../../../chss-module-engine/src/engine_new/e
 
 /* debug */ let started;
 
+const getChangedIndexes = (() => {
+  let previousBoard = [];
+  let previousResult = [];
+
+  return (board) => {
+    if (previousBoard === board) return previousResult;
+
+    previousResult = [];
+    board.slice(0, 64).forEach((cell, index) => {
+      if (cell !== previousBoard[index]) previousResult.push(index);
+    });
+
+    previousBoard = board;
+    return previousResult;
+  }
+})();
+
 const previosTable = [];
 for (let x = 0; x < 8; x += 1) {
   previosTable[x] = [];
@@ -33,8 +50,12 @@ export const Board = () => {
   setCurrentGameState(gameState);
 
   const { board, nextMoves, bitBoard: _bitBoard } = gameState;
+  const changedIndexes = getChangedIndexes(board);
+
+  const userCanMove = userId === gameState[board[64] ? 'wPlayer' : 'bPlayer'];
 
   if (isNewGameState) {
+    changedIndexes.length = 0;
     setMoveSourceCell(null);
     setMovePotentialTargetCells([]);
   }
@@ -83,13 +104,8 @@ export const Board = () => {
   };
 
   const makeMove = async(move) => {
-
-
-
     const nextGameState = moveInBoard(move, gameState);
-
     nextGameState.pieceBalance = getPieceBalance(nextGameState.board);
-
 
     setGameState(nextGameState);
     clearMoveSourceCell();
@@ -112,6 +128,7 @@ export const Board = () => {
       .then(setProgressCompleted);
   };
 
+
   return (<div>
     <ProgressBar progress={{ total: progressTotal, completed: progressCompleted }} />
     <div className={style.boardContainer}>
@@ -126,6 +143,8 @@ export const Board = () => {
           const moveTargets = nestedMoves[cellIndex];
           
           const onDragStart = moveTargets && ((e) => {
+            if (!userCanMove) return;
+            changedIndexes.length = 0;
             setMoveSourceCell(cellIndex);
             setMovePotentialTargetCells(moveTargets);
           });
@@ -152,7 +171,7 @@ export const Board = () => {
               return;
             }
 
-            if (!moveSourceCell) {
+            if (!moveSourceCell && moveSourceCell !== 0) {
               if (onDragStart) onDragStart();
               return;
             }
@@ -167,7 +186,7 @@ export const Board = () => {
 
           return (<div key={colIndex} className={(rowIndex + colIndex) & 1  ? style.darker : style.square}>
             <div onDragOver={onDragOver} onDrop={onDrop} onClick={cellClickHandler}>
-              <img src={`/assets/pieces/${cell}.png`} draggable={moveTargets} onDragStart={onDragStart} className={`${selectedClass} ${' ' || (cell[15] ? style.selected2 : '')}`} />
+              <img src={`/assets/pieces/${cell}.png`} draggable={moveTargets} onDragStart={onDragStart} className={`${selectedClass} ${changedIndexes.includes(rowIndex * 8 + colIndex) ? style.selected2 : ''}`} />
             </div>
           </div>);
         })}

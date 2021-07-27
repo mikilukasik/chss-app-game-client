@@ -6,7 +6,7 @@ import { isCaptured } from '../../../chss-module-engine/src/engine_new/utils/isC
 
 export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailableWorker }) => new Promise(async(resolve) => {
   const { move, currentBest, board, desiredDepth, popularMoves, nextMoves, moveTree = [], dontLoop, repeatedPastFens } = smallMoveTask;
-  const currentBests = Array.from({ length: desiredDepth }).map(() => -128);
+  const currentBests = Array.from({ length: desiredDepth }).map(() => -32768);
   const movedBoard = getMovedBoard(move, board);
 
   let castlingScore = 0;
@@ -17,11 +17,20 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
       // TODO: implement white castling value score
     } else {
 
-      const qSideChangeVal = (board[65] & 1) !== (movedBoard[65] & 1) ? 0.2 : 0; 
-      const kSideChangeVal = (board[65] & 2) !== (movedBoard[65] & 2) ? 0.2 : 0; 
+      const qSideChangeVal = (board[65] & 1) !== (movedBoard[65] & 1) ? 50 : 0; 
+      const kSideChangeVal = (board[65] & 2) !== (movedBoard[65] & 2) ? 50 : 0; 
       
       if (![4102, 4098].includes(move)) castlingScore += qSideChangeVal + kSideChangeVal;
     }
+  }
+
+  let loopScore = 0;
+  if (repeatedPastFens.includes(board2fen(movedBoard))) {
+    // move would loop
+    loopScore = 2000;
+
+    if (!dontLoop) loopScore *= -1;
+    if (movedBoard[64] === 0) loopScore *= -1;
   }
 
   const depth2Moves = nextMoves || Array.from(generatePseudoMoves(movedBoard));
@@ -37,7 +46,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
     if (res.length === 0) {
       if (isCaptured(movedBoard, movedBoard.indexOf(6 + ((movedBoard[64]) << 3)), movedBoard[64])) {
         // checkmate
-        res.push({ score: movedBoard[64] ? -120 : 120, moveTree: [move] })
+        res.push({ score: movedBoard[64] ? -32000 : 32000, moveTree: [move] })
       } else {
         // TODO: use shouldloop, shouldidraw
         res.push({ score: movedBoard[64] ? 120 : -120, moveTree: [move] })
@@ -56,20 +65,10 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
       return bIndex - aIndex;
     });
 
-    let loopScore = 0;
-    if (repeatedPastFens.includes(board2fen(movedBoard))) {
-      // move would loop
-      loopScore = 10;
-
-      if (!dontLoop) loopScore *= -1;
-      if (movedBoard[64] === 0) loopScore *= -1;
-
-    }
-
     const result = {
       move,
       nextMoves: d2MovesCopy,
-      score: res[0].score + loopScore + castlingScore,
+      score: res[0].score, // + loopScore + castlingScore,
       aiValue: res[0].aiVal,
       pieceScore: res[0].score,
       moveTree: res[0].moveTree,
@@ -82,7 +81,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
   const mergeCurrentBests = (receivedCurrentBests) => {
     const valueToUse = receivedCurrentBests[0];
     if (
-      currentBests[0] === -128 ||
+      currentBests[0] === -32768 ||
       (board[64] === 0 && valueToUse > currentBests[0]) ||
       (board[64] === 1 && valueToUse < currentBests[0])
     ) {
@@ -103,7 +102,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
     const d2Move = depth2Moves.pop();
 
     worker.onmessage = async({ data }) => {
-      if (data.score === -128) {
+      if (data.score === -32768) {
         // that was an illegal return move
         tasksLength -= 1;
         release();
@@ -111,16 +110,39 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
         return;
       }
 
-      res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+      data.score += loopScore + castlingScore;
+     
+      if (currentBest[0] !== -32768) {
+        if ((data.score) > currentBest[0]) {
+          // abort, server already has a better move than this
 
-      if (currentBest[0] !== -128 && (data.score + castlingScore) >= currentBest[0]) {
-        // abort, server already has a better move than this
-        evaluateMove();
-        release();
-        depth2Moves.length = 0;
-        aborted = true;
-        return;
+          res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+
+          evaluateMove();
+          release();
+          depth2Moves.length = 0;
+          aborted = true;
+          return;
+        }
+
+
+        if ((data.score) === currentBest[0]) {
+          // abort, server already has a move at least as good as this
+          // make this move worst than the currentbest to make sure it won't be used
+          // TODO: implement white version of the same
+          data.score = 32767;
+
+          res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+
+          evaluateMove();
+          release();
+          depth2Moves.length = 0;
+          aborted = true;
+          return;
+        }
       }
+
+      res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
 
       mergeCurrentBests(data.currentBests);
       release();
