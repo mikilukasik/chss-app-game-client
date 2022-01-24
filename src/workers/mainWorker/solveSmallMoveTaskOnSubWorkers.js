@@ -116,7 +116,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
         if ((data.score) > currentBest[0]) {
           // abort, server already has a better move than this
 
-          res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+          res.push({ ...data, d2Move, moveTree: [ move, ...(data.moveTree || []) ]});
 
           evaluateMove();
           release();
@@ -132,7 +132,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
           // TODO: implement white version of the same
           data.score = 32767;
 
-          res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+          res.push({ ...data, d2Move, moveTree: [ move, ...(data.moveTree || []) ]});
 
           evaluateMove();
           release();
@@ -142,7 +142,7 @@ export const solveSmallMoveTaskOnSubWorkers = ({ smallMoveTask, getNextAvailable
         }
       }
 
-      res.push({ ...data, d2Move, moveTree: [ move, ...data.moveTree ]});
+      res.push({ ...data, d2Move, moveTree: [ move, ...(data.moveTree || []) ]});
 
       mergeCurrentBests(data.currentBests);
       release();

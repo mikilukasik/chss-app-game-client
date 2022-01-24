@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title><% preact.title %></title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<meta name="mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-		<% preact.headEnd %>
-		<style>
-			.mdc-dialog--open {
-				visibility: visible;
-				background: none;
-				border: none;
-			}
-		</style>
-	</head>
-	<body>
-		<% preact.bodyEnd %>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <title><% preact.title %></title>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm/dist/tf-backend-wasm.js"></script> -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+    <% preact.headEnd %>
+    <style>
+      .mdc-dialog--open {
+        visibility: visible;
+        background: none;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <% preact.bodyEnd %>
+  </body>
 </html>

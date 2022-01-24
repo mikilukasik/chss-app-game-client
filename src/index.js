@@ -7,17 +7,19 @@ import { ensureClientIdCookie } from './services/cookieService';
 import { setUser } from './services/userService';
 import { usePlayerSocket } from './services/gamesService';
 import { debugService } from './services/debugService';
+import { useTournamentSocket } from './services/tournamentService';
 
 let _authSocket;
 const authSocketAwaiters = [];
 
-export const getAuthSocket = () => new Promise(resolve => {
-  if (_authSocket) return resolve(_authSocket);
-  authSocketAwaiters.push(resolve);
-});
+export const getAuthSocket = () =>
+  new Promise((resolve) => {
+    if (_authSocket) return resolve(_authSocket);
+    authSocketAwaiters.push(resolve);
+  });
 
 (() => {
-if (typeof self === 'undefined') return;
+  if (typeof self === 'undefined') return;
   ensureClientIdCookie();
 
   const authSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/authSocket`);
@@ -26,10 +28,17 @@ if (typeof self === 'undefined') return;
     comms.send('ok');
   });
   _authSocket = authSocket;
-  authSocketAwaiters.forEach(r => r(authSocket));
+  authSocketAwaiters.forEach((r) => r(authSocket));
 
-  const playerSocket = msgClient.ws(`ws://${typeof window === 'undefined' || window.location.hostname}:3300/playerSocket`);
+  const playerSocket = msgClient.ws(
+    `ws://${typeof window === 'undefined' || window.location.hostname}:3300/playerSocket`,
+  );
   usePlayerSocket(playerSocket);
+
+  const tournamentSocket = msgClient.ws(
+    `ws://${typeof window === 'undefined' || window.location.hostname}:3300/tournamentSocket`,
+  );
+  useTournamentSocket(tournamentSocket);
 
   initWorkers();
 
