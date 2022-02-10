@@ -84,7 +84,7 @@ const getModel = (name) =>
     }
   });
 
-export const getPrediction = async ({ modelName, board, randomValue, repeatedPastFens = [] }) => {
+export const getPrediction = async ({ modelName, board, randomValue, repeatedPastFens = [], noLoop = false }) => {
   const {
     model,
     transform,
@@ -99,7 +99,7 @@ export const getPrediction = async ({ modelName, board, randomValue, repeatedPas
     needsInverseOutput = mirrored;
   }
 
-  if (repeatedPastFens.length && repeatedPastFens.includes(fenStr)) {
+  if (noLoop && repeatedPastFens.length && repeatedPastFens.includes(fenStr)) {
     return null;
   }
 
@@ -121,7 +121,7 @@ export const getPrediction = async ({ modelName, board, randomValue, repeatedPas
 
   inputTensor.dispose();
   outputTensor.dispose();
-
+  console.log({ output });
   return output;
 };
 
@@ -151,7 +151,7 @@ const makeMove = async ({ game, modelName, randomValue = 0 }) => {
   const predictions = await Promise.all(
     nextMoves.map((move) => {
       const movedBoard = getMovedBoard(move, board);
-      return getPrediction({ modelName, board: movedBoard, randomValue, repeatedPastFens });
+      return getPrediction({ modelName, board: movedBoard, randomValue, repeatedPastFens, noLoop: true });
     }),
   );
 

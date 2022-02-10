@@ -1,0 +1,1 @@
+export { SmallBoard } from "./SmallBoard";

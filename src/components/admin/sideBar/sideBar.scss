@@ -1,0 +1,28 @@
+.sideBarContainer {
+  background-color: #3e3838;
+  padding: 10px;
+  box-shadow: 4px 4px 3px #504c4c;
+  grid-area: sidebar;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+.sideBarContainer a {
+  display: block;
+  width: fit-content;
+  height: fit-content;
+  padding: 5px;
+  color: #fae2bf;
+  text-decoration: none;
+
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+}
+
+@media (min-width: 1000px) {
+  .sideBarItem {
+    display: block;
+  }
+}

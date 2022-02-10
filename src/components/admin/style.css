@@ -1,0 +1,18 @@
+.gameContainer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-gap: 1vw;
+  padding: 0 1vw;
+  height: 91vh;
+  grid-template-areas:
+    'board'
+    'sidebar';
+}
+
+@media (min-width: 1000px) {
+  .gameContainer {
+    grid-template-rows: none;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'sidebar board';
+  }
+}

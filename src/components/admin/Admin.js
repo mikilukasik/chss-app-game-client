@@ -5,26 +5,23 @@ import UserContext from '../../context/UserContext';
 import { persistUserSettings } from '../../services/userService';
 import { GameBuilder } from '../game/gameBuilder';
 import { LearningControl } from '../learningControl/LearningControl';
+import { SideBar } from './sideBar';
+import { AdminTab } from './adminTab/AdminTab';
+import { EngineTournament } from './engineTournament/EngineTournament';
+import { OldAdmin } from '.';
 
-export const Admin = () => {
-  const { user, userSettings, setUserSettings } = useContext(UserContext);
-  if (!user || !user.isAdmin) return;
+const subRouteCompinents = {
+  'engine-tournament': <EngineTournament />,
+  'old-admin': <OldAdmin />,
+};
 
-  const onLocalSingleThreadAiChange = ({ target: { checked } }) => {
-    setUserSettings({ ...userSettings, useLocalSingleThreadAi: checked });
-    persistUserSettings({ useLocalSingleThreadAi: checked });
-  };
-
+export const Admin = ({ subRoute }) => {
+  console.log(subRoute);
   return (
-    <div>
-      <label>
-        <input type="checkbox" checked={userSettings.useLocalSingleThreadAi} onChange={onLocalSingleThreadAiChange} />
-        Local single thread move calculation
-      </label>
-
-      <LearningControl />
-      <br />
-      <GameBuilder />
+    <div className={style.gameContainer}>
+      <SideBar />
+      {/* <AdminTab /> */}
+      {subRouteCompinents[subRoute]}
     </div>
   );
 };
