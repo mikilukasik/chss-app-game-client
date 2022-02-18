@@ -5,6 +5,7 @@
   grid-area: sidebar;
   overflow: auto;
   white-space: nowrap;
+  height: inherit;
 }
 
 .sideBarContainer a {
@@ -24,5 +25,15 @@
 @media (min-width: 1000px) {
   .sideBarItem {
     display: block;
+  }
+}
+
+.active {
+  font-weight: 600;
+  color: #ffecc9;
+
+  &:hover {
+    cursor: default !important;
+    text-decoration: none !important;
   }
 }

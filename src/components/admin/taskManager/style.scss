@@ -1,0 +1,15 @@
+.taskManagerContainer {
+  display: grid;
+  min-height: fit-content;
+  grid-template-rows: max-content;
+}
+
+.newTaskButton {
+  float: right;
+}
+
+.buttonsContainer {
+  width: 100%;
+  display: inline-block;
+  margin-bottom: 5px;
+}

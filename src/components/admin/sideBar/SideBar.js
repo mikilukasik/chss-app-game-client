@@ -11,7 +11,9 @@ export const SideBar = () => {
       <Link activeClassName={style.active} href="/admin/engine-tournament">
         Engine Tournament
       </Link>
-      {/* <div className={style.sideBarItem}>a</div> */}
+      <Link activeClassName={style.active} href="/admin/task-manager">
+        Task Manager
+      </Link>
     </div>
   );
 };

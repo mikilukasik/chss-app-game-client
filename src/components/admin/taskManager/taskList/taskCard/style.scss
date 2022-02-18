@@ -1,0 +1,36 @@
+.taskCard {
+  padding: 0 25px 0.83em 25px;
+}
+
+.taskCardHeaderContainer {
+  overflow: auto;
+}
+
+.taskCardContainer {
+  padding-bottom: 15px;
+}
+
+.command {
+  float: left;
+}
+
+.status {
+  float: right;
+}
+
+.paramTableValue {
+  padding-left: 5px;
+  font-family: monospace;
+}
+
+.paramTableKey {
+  padding-right: 5px;
+  text-align: right;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.resultRow {
+  font-weight: 600;
+  background-color: #ddf;
+}

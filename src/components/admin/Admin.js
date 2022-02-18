@@ -1,27 +1,19 @@
 import { h } from 'preact';
-import { useContext } from 'preact/hooks';
 import style from './style.css';
-import UserContext from '../../context/UserContext';
-import { persistUserSettings } from '../../services/userService';
-import { GameBuilder } from '../game/gameBuilder';
-import { LearningControl } from '../learningControl/LearningControl';
 import { SideBar } from './sideBar';
-import { AdminTab } from './adminTab/AdminTab';
-import { EngineTournament } from './engineTournament/EngineTournament';
 import { OldAdmin } from '.';
+import { EngineTournament } from './engineTournament';
+import { TaskManager } from './taskManager';
 
-const subRouteCompinents = {
+const subRouteComponents = {
   'engine-tournament': <EngineTournament />,
   'old-admin': <OldAdmin />,
+  'task-manager': <TaskManager />,
 };
 
-export const Admin = ({ subRoute }) => {
-  console.log(subRoute);
-  return (
-    <div className={style.gameContainer}>
-      <SideBar />
-      {/* <AdminTab /> */}
-      {subRouteCompinents[subRoute]}
-    </div>
-  );
-};
+export const Admin = ({ subRoute }) => (
+  <div className={style.gameContainer}>
+    <SideBar />
+    {subRouteComponents[subRoute]}
+  </div>
+);
