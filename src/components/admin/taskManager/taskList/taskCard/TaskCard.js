@@ -9,11 +9,15 @@ import 'preact-material-components/LinearProgress/style.css';
 
 import style from './style.scss';
 
-export const TaskCard = ({ command, status, ...params }) => {
+export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, ...params } }) => {
   const { totalChildren = 0, unsolvedChildren = 0 } = params;
 
+  const taskCardClickHandler = () => {
+    setTaskPath([].concat(taskPath).concat(params._id));
+  };
+
   return (
-    <div className={style.taskCardContainer}>
+    <div className={style.taskCardContainer} onclick={taskCardClickHandler}>
       <Card className={style.taskCard}>
         <div class="card-header">
           <h2 class=" mdc-typography--title ">

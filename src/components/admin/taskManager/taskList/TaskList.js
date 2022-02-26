@@ -7,34 +7,52 @@ import { TaskCard } from './taskCard';
 
 let _taskList = [];
 
-export const TaskList = () => {
+export const TaskList = ({ taskPath, setTaskPath }) => {
   const [taskList, setTaskList] = useState([]);
+  const [currentSubscriptionKey, setCurrentSubscriptionKey] = useState(null);
+  // const [taskChangeSubscriptions, setTaskChangeSubscriptions] = useState([]);
 
   const changeTask = async (task) => {
-    if (task.parentId) return;
+    // if (task.parentId) return;
 
-    const newTaskList = _taskList.slice();
-    const taskIndex = newTaskList.findIndex(({ _id }) => _id === task._id);
+    const taskIndex = _taskList.findIndex(({ _id }) => _id === task._id);
 
     if (taskIndex < 0) return;
-    newTaskList[taskIndex] = task;
 
+    const newTaskList = _taskList.slice();
+    newTaskList[taskIndex] = task;
     _taskList = newTaskList;
-    setTaskList(newTaskList.filter((task) => !task.parentId));
+
+    setTaskList(newTaskList);
   };
 
   useEffect(async () => {
+    const parentId = taskPath[taskPath.length - 1];
+
     const taskSocket = await getTaskSocket();
-    _taskList = await taskSocket.do('getTaskList');
-    setTaskList(_taskList.filter((task) => !task.parentId));
+    _taskList = await taskSocket.do('getTaskList', parentId ? { filters: { parentId } } : {});
+    setTaskList(_taskList); //.filter((task) => !task.parentId));
 
-    taskSocket.subscribe('taskListChanged', async () => {
-      _taskList = await taskSocket.do('getTaskList');
-      setTaskList(_taskList.filter((task) => !task.parentId));
+    if (currentSubscriptionKey) taskSocket.unsubscribe(currentSubscriptionKey);
+
+    const subscriptionName = parentId ? `childTaskListChangedFor${parentId}` : 'taskListChanged';
+    taskSocket.subscribe(subscriptionName, async () => {
+      setCurrentSubscriptionKey(subscriptionName);
+      _taskList = await taskSocket.do('getTaskList', parentId ? { filters: { parentId } } : {});
+      setTaskList(_taskList); //.filter((task) => !task.parentId));
     });
+  }, [taskPath]);
 
+  useEffect(async () => {
+    const taskSocket = await getTaskSocket();
     taskSocket.subscribe('taskChanged', changeTask);
   }, []);
 
-  return <div className={style.taskListContainer}>{taskList.map(TaskCard)}</div>;
+  return (
+    <div className={style.taskListContainer}>
+      {taskList.map((task) => (
+        <TaskCard {...{ taskPath, setTaskPath, task }} />
+      ))}
+    </div>
+  );
 };
