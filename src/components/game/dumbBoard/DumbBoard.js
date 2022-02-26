@@ -28,12 +28,12 @@ import 'preact-material-components/Checkbox/style.css';
 
 import Formfield from 'preact-material-components/FormField';
 
-// const _modelName = '420_d2-0.05614-s1.27M-e50-1643099811150';
+// const _modelName = '0.03606-e8-1644187281482';
 // const _modelName = '0.00473-1641230911613_s1000k_e20'; //can count pieces
 // const _modelName = '451_d2-14-0.03523-s5.33M-e25-1643486743133';
 // const _modelName = '424_d2-0.06103-s0.89M-e50-1643221783648';
-const _modelName = '0.03560-e1-1645054100999';
-// const _modelName = '0.03586-e4-1644319510478';
+// const _modelName = '0.03560-e1-1645054100999';
+const _modelName = '451_r4-0.03330-s5.22M-e4-1643803305990';
 
 // tf.loadLayersModel(`/assets/models/${modelName}/model.json`).then((_model) => {
 //   console.log('tf model loaded in DumbBoard');
@@ -239,7 +239,7 @@ export const DumbBoard = () => {
             const pawnMoved = (board[move >>> 10] & 7) === 1;
             const targetIndex = move & 63;
             const pawnTurnsQueen = pawnMoved && targetIndex >= 56;
-            console.log(pawnTurnsQueen);
+            // console.log(pawnTurnsQueen);
             return pred + weights[board[targetIndex] & 7] + (pawnTurnsQueen ? weights[5] - weights[1] : 0);
           }, //+ (Math.random() - 0.5) / 100, //+ weights[board[move & 63] & 7], //
         );
