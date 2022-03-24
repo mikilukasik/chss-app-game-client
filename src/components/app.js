@@ -18,6 +18,7 @@ import {
   useReplayMoveNumberSetter,
 } from '../services/gamesService';
 import { LoginModal } from './loginModal';
+import WorkerFrame from './workerFrame';
 
 const App = () => {
   const [games, setGames] = useState();
@@ -74,6 +75,7 @@ const App = () => {
 
   return (
     <div id="app" className={style.appContainer}>
+      <WorkerFrame />
       <UserContext.Provider value={userContext}>
         <GameContext.Provider value={gameContext}>
           <Header />

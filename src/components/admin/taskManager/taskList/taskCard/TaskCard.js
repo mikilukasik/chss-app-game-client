@@ -9,7 +9,7 @@ import 'preact-material-components/LinearProgress/style.css';
 
 import style from './style.scss';
 
-export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, ...params } }) => {
+export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, infinite, ...params } }) => {
   const { totalChildren = 0, unsolvedChildren = 0 } = params;
 
   const taskCardClickHandler = () => {
@@ -17,7 +17,7 @@ export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, ...pa
   };
 
   return (
-    <div className={style.taskCardContainer} onclick={taskCardClickHandler}>
+    <div className={style.taskCardContainer}>
       <Card className={style.taskCard}>
         <div class="card-header">
           <h2 class=" mdc-typography--title ">
@@ -28,7 +28,7 @@ export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, ...pa
                 <div>
                   {status === 'in progress' && (
                     <LinearProgress
-                      indeterminate={totalChildren === 0 || totalChildren === unsolvedChildren}
+                      indeterminate={totalChildren === 0 || totalChildren === unsolvedChildren || infinite}
                       progress={totalChildren ? 1 - unsolvedChildren / totalChildren : null}
                     />
                   )}
@@ -51,17 +51,18 @@ export const TaskCard = ({ taskPath, setTaskPath, task: { command, status, ...pa
             </table>
           </div>
         </div>
-        {/* <Card.Media className="card-media" />
+        <Card.Media className="card-media" />
         <Card.Actions>
-          <Card.ActionButtons>
-            <Card.ActionButton>OK</Card.ActionButton>
+          {/* <Card.ActionButtons>
+            <Card.ActionButton onclick={taskCardClickHandler}>Subtasks</Card.ActionButton>
             <Card.ActionButton>cancel</Card.ActionButton>
-          </Card.ActionButtons>
+          </Card.ActionButtons> */}
           <Card.ActionIcons>
-            <Card.ActionIcon>share</Card.ActionIcon>
-            <Card.ActionIcon>abort</Card.ActionIcon>
+            {/* <Card.ActionIcon>share</Card.ActionIcon> */}
+            {/* <Card.ActionIcon onclick={taskCardClickHandler}>Subtasks</Card.ActionIcon> */}
+            <Card.ActionButton onclick={taskCardClickHandler}>Subtasks</Card.ActionButton>
           </Card.ActionIcons>
-        </Card.Actions> */}
+        </Card.Actions>
       </Card>
     </div>
   );

@@ -39,7 +39,7 @@ export const CreateTaskModal = ({ useRef }) => {
 
     const newTaskWithDefaults = { ...newTask };
     for (const key of Object.keys(td.argShape || {})) {
-      const defaultValue = td.argShape[key].defaultValue;
+      const defaultValue = (td.argShape[key].defaultValue || '').toString();
 
       if (typeof defaultValue === 'undefined' || newTask[key] === defaultValue) continue;
       newTaskWithDefaults[key] = defaultValue;
