@@ -88,6 +88,7 @@ export const DumbBoard = () => {
   const [randomValue, setRandomValue] = useState();
   const [tournamentStats, setTournamentStats] = useState();
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
+  const [keepMoving, setKeepMoving] = useState(false);
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
   // const [progressCompleted, setProgressCompleted] = useState();
@@ -99,7 +100,7 @@ export const DumbBoard = () => {
   const { board, nextMoves, bitBoard: _bitBoard } = gameState;
   // const changedIndexes = getChangedIndexes(board);
 
-  const updateAiDisplay = async (nextGameState, keepMoving = false) => {
+  const updateAiDisplay = async (nextGameState) => {
     const moveSorter = await getMoveSorter(nextGameState.board);
     const moves = nextGameState.nextMoves.slice().sort(moveSorter);
     setWinningMove(move2moveString(moves[0]));
@@ -114,10 +115,10 @@ export const DumbBoard = () => {
       ),
     );
 
-    // if (keepMoving)
-    //   setTimeout(() => {
-    //     makeMove(moves[0]);
-    //   }, 50);
+    if (keepMoving)
+      setTimeout(() => {
+        makeMove(moves[0]);
+      }, 5);
   };
 
   useEffect(() => {
@@ -335,6 +336,7 @@ export const DumbBoard = () => {
   };
 
   const onFeeMovesCheckboxChange = ({ target: { checked } }) => setFreeMovesChecked(checked);
+  const onAutoMoveChange = ({ target: { checked } }) => setKeepMoving(checked);
 
   const setWnext = (wNext, game = gameState) => {
     const nextGameState = Object.assign({}, game, { wNext, board: game.board.slice() });
@@ -465,6 +467,13 @@ export const DumbBoard = () => {
       </div>
       <div>
         <div>
+          <Formfield>
+            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChange} checked={keepMoving} />
+            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
+              Auto move
+            </label>
+          </Formfield>
+
           <Formfield>
             <Checkbox
               id="free-moves-checkbox"
