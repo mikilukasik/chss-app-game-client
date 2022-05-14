@@ -17,7 +17,7 @@ import * as tf from '@tensorflow/tfjs';
 import { board2fen } from '../../../../chss-module-engine/src/engine_new/transformers/board2fen';
 import { getMovedBoard } from '../../../../chss-module-engine/src/engine_new/utils/getMovedBoard';
 import Button from 'preact-material-components/Button';
-import { getPrediction, startTournament } from '../../../services/tournamentService';
+import { startTournament } from '../../../services/tournamentService';
 import TextField from 'preact-material-components/TextField';
 
 import Checkbox from 'preact-material-components/Checkbox';
@@ -27,12 +27,15 @@ import 'preact-material-components/Checkbox/style.css';
 // // import 'preact-material-components/FormControlLabel/style.css';
 
 import Formfield from 'preact-material-components/FormField';
+import { getPrediction } from '../../../../chss-module-engine/src/engine_new/tfModels/getPrediction';
+import { getMoveSorter } from '../../../../chss-module-engine/src/engine_new/moveGenerators/getMoveSorter';
 
 // const _modelName = '0.03606-e8-1644187281482';
 // const _modelName = '0.00473-1641230911613_s1000k_e20'; //can count pieces
 // const _modelName = '451_d2-14-0.03523-s5.33M-e25-1643486743133';
 // const _modelName = '424_d2-0.06103-s0.89M-e50-1643221783648';
 const _modelName = 'champion';
+const _movesModelName = 'moves_0.02716-e1-1652296629425';
 // const _modelName = '451_r4-0.03330-s5.22M-e4-1643803305990';
 
 // tf.loadLayersModel(`/assets/models/${modelName}/model.json`).then((_model) => {
@@ -79,6 +82,8 @@ export const DumbBoard = () => {
   const [movePotentialTargetCells, setMovePotentialTargetCells] = useState([]);
   const [gameState, setGameState] = useState(new GameModel());
   const [aiResult, setAiResult] = useState();
+  const [aiMovesResult, setAiMovesResult] = useState([]);
+  const [winningMove, setWinningMove] = useState('');
   const [rounds, setRounds] = useState();
   const [randomValue, setRandomValue] = useState();
   const [tournamentStats, setTournamentStats] = useState();
@@ -93,6 +98,31 @@ export const DumbBoard = () => {
 
   const { board, nextMoves, bitBoard: _bitBoard } = gameState;
   // const changedIndexes = getChangedIndexes(board);
+
+  const updateAiDisplay = async (nextGameState, keepMoving = false) => {
+    const moveSorter = await getMoveSorter(nextGameState.board);
+    const moves = nextGameState.nextMoves.slice().sort(moveSorter);
+    setWinningMove(move2moveString(moves[0]));
+
+    setAiMovesResult(
+      normalizeToOneGrouped(
+        await getPrediction({
+          modelName: _movesModelName,
+          board: nextGameState.board,
+          repeatedPastFens: nextGameState.repeatedPastFens,
+        }),
+      ),
+    );
+
+    // if (keepMoving)
+    //   setTimeout(() => {
+    //     makeMove(moves[0]);
+    //   }, 50);
+  };
+
+  useEffect(() => {
+    updateAiDisplay(gameState);
+  }, []);
 
   // const userCanMove = userId === gameState[board[64] ? "wPlayer" : "bPlayer"];
 
@@ -161,6 +191,17 @@ export const DumbBoard = () => {
     setMovePotentialTargetCells([]);
   };
 
+  const normalizeToOne = (arr) => {
+    const maxVal = Math.max(...arr);
+    const multiplier = 1 / maxVal;
+    return arr.map((num) => num * multiplier);
+  };
+
+  const normalizeToOneGrouped = (longArr) => [
+    ...normalizeToOne(longArr.slice(0, 64)),
+    ...normalizeToOne(longArr.slice(64)),
+  ];
+
   const makeMove = async (move) => {
     const origWnext = gameState.wNext;
     let nextGameState = moveInBoard(move, gameState);
@@ -174,7 +215,7 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
     clearMoveSourceCell();
 
-    if (!nextGameState.wNext && !freeMovesChecked) autoMove();
+    if (!nextGameState.wNext && !freeMovesChecked) return autoMove();
     // const progressHandler = ({ progress: p }) => {
     //   setProgressTotal(p.total);
     //   setProgressCompleted(p.completed);
@@ -193,6 +234,10 @@ export const DumbBoard = () => {
         repeatedPastFens: nextGameState.repeatedPastFens,
       })) * 50,
     );
+
+    updateAiDisplay(nextGameState, true);
+
+    // console.log({ movesResult });
     // console.log(Math.round(aiResult), aiResult);
 
     // const playerSocket = await getPlayerSocket();
@@ -381,8 +426,23 @@ export const DumbBoard = () => {
               const selectedClass =
                 moveSourceCell === cellIndex || (isPotentialTarget && !freeMovesChecked) ? style.selected : '';
 
+              const getColorFromIndex = (index) => {
+                return Math.round(Math.max(0, Math.min(255, aiMovesResult[index] * 256)))
+                  .toString(16)
+                  .padStart(2, '0');
+              };
+
+              const aiMoveSourceCol = getColorFromIndex(rowIndex * 8 + colIndex);
+              const aiMoveTargetCol = getColorFromIndex(rowIndex * 8 + colIndex + 64);
+              const aiBorder = `5px solid #${aiMoveSourceCol}00${aiMoveTargetCol}`;
+              // console.log({ aiBorder });
+
               return (
-                <div key={colIndex} className={(rowIndex + colIndex) & 1 ? style.darker : style.square}>
+                <div
+                  key={colIndex}
+                  className={(rowIndex + colIndex) & 1 ? style.darker : style.square}
+                  style={{ border: aiBorder }}
+                >
                   <div onDragOver={onDragOver} onDrop={onDrop} onClick={cellClickHandler}>
                     <img
                       src={`/assets/pieces/${cell}.png`}
@@ -439,6 +499,8 @@ export const DumbBoard = () => {
           </select> */}
           {/* <input type="checkbox">Free moves</input> */}
           {aiResult?.toFixed(3)}
+          <br />
+          {winningMove}
           {/* <span>
             <TextField label="Rounds" onKeyUp={(e) => setRounds(e.target.value)} />
           </span>
