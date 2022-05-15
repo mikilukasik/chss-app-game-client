@@ -29,6 +29,7 @@ import 'preact-material-components/Checkbox/style.css';
 import Formfield from 'preact-material-components/FormField';
 import { getPrediction } from '../../../../chss-module-engine/src/engine_new/tfModels/getPrediction';
 import { getMoveSorter } from '../../../../chss-module-engine/src/engine_new/moveGenerators/getMoveSorter';
+import { aiWorker } from '../../workerFrame';
 
 // const _modelName = '0.03606-e8-1644187281482';
 // const _modelName = '0.00473-1641230911613_s1000k_e20'; //can count pieces
@@ -81,6 +82,7 @@ export const DumbBoard = () => {
   const [moveSourceCell, setMoveSourceCell] = useState();
   const [movePotentialTargetCells, setMovePotentialTargetCells] = useState([]);
   const [gameState, setGameState] = useState(new GameModel());
+  const [evalResult, setEvalResult] = useState({});
   const [aiResult, setAiResult] = useState();
   const [aiMovesResult, setAiMovesResult] = useState([]);
   const [winningMove, setWinningMove] = useState('');
@@ -89,6 +91,8 @@ export const DumbBoard = () => {
   const [tournamentStats, setTournamentStats] = useState();
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
   const [keepMoving, setKeepMoving] = useState(false);
+  const [depth, setDepth] = useState(3);
+  // const [activeFen, setActiveFen] = useState();
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
   // const [progressCompleted, setProgressCompleted] = useState();
@@ -216,7 +220,8 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
     clearMoveSourceCell();
 
-    if (!nextGameState.wNext && !freeMovesChecked) return autoMove();
+    // if (!nextGameState.wNext && !freeMovesChecked) return autoMove();
+
     // const progressHandler = ({ progress: p }) => {
     //   setProgressTotal(p.total);
     //   setProgressCompleted(p.completed);
@@ -363,6 +368,17 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
+  const evaluateBoard = async () => {
+    setEvalResult({});
+    const result = await aiWorker.do('ai', {
+      method: 'localSingleThread',
+      board: gameState.board,
+      moves: gameState.nextMoves,
+      depth,
+    });
+    setEvalResult(result);
+  };
+
   return (
     <div className={style.dumbBoardContainer}>
       {/* <ProgressBar progress={{ total: progressTotal, completed: progressCompleted }} /> */}
@@ -468,6 +484,19 @@ export const DumbBoard = () => {
       <div>
         <div>
           <Formfield>
+            <TextField
+              label="State"
+              value={board2fen(gameState.board)}
+              onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
+              outerStyle={{ 'min-width': '-webkit-fill-available' }}
+            />
+            {/* <input
+              value={board2fen(gameState.board)}
+              onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
+            /> */}
+          </Formfield>
+
+          <Formfield>
             <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChange} checked={keepMoving} />
             <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
               Auto move
@@ -510,6 +539,15 @@ export const DumbBoard = () => {
           {aiResult?.toFixed(3)}
           <br />
           {winningMove}
+
+          <div>
+            <Button onClick={evaluateBoard}>Evaluate</Button>
+            <input value={depth} onChange={(e) => setDepth(Number(e.target.value))} />
+            <div className={style.smallerText}>
+              <pre>{JSON.stringify(evalResult, null, 2)}</pre>
+            </div>
+          </div>
+
           {/* <span>
             <TextField label="Rounds" onKeyUp={(e) => setRounds(e.target.value)} />
           </span>
