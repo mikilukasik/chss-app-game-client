@@ -1,12 +1,15 @@
 import { h } from 'preact';
 import { getLegalMoveCountThrowMethod } from '../../../chss-module-engine/src/engine_new/testUtils/getLegalMoveCountThrowMethod';
 import { board2fen } from '../../../chss-module-engine/src/engine_new/transformers/board2fen';
+import { move2moveString } from '../../../chss-module-engine/src/engine_new/transformers/move2moveString';
 import { getMovedBoard } from '../../../chss-module-engine/src/engine_new/utils/getMovedBoard';
 import { GameModel } from '../../../chss-module-engine/src/model/Game';
 import { fen2intArray } from '../../../chss-service-game-handler/chss-module-engine/src/engine_new/transformers/fen2intArray';
 import { generateLegalMoves } from '../../chss-module-engine/src/engine_new/moveGenerators/generateLegalMoves';
 import { perfTestFens } from './debugHelpers/perftTestFens';
 import { getCurrentGameState, getCurrentGameUpdater, getPlayerSocket, startCustomGame } from './gamesService';
+
+move2moveString;
 
 export const perft = (depth = 5, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') => {
   const chssEncodedMoves = generateLegalMoves(fen2intArray(fen));
@@ -85,5 +88,6 @@ export const debugService = async () => {
     startCustomGame,
     board2fen,
     fen2intArray,
+    move2moveString,
   });
 };

@@ -36,7 +36,7 @@ import { aiWorker } from '../../workerFrame';
 // const _modelName = '451_d2-14-0.03523-s5.33M-e25-1643486743133';
 // const _modelName = '424_d2-0.06103-s0.89M-e50-1643221783648';
 const _modelName = 'champion';
-const _movesModelName = 'moves_0.02716-e1-1652296629425';
+const _movesModelName = 'moves_0.02679-e1-1652876197395';
 // const _modelName = '451_r4-0.03330-s5.22M-e4-1643803305990';
 
 // tf.loadLayersModel(`/assets/models/${modelName}/model.json`).then((_model) => {
@@ -69,7 +69,7 @@ const _movesModelName = 'moves_0.02716-e1-1652296629425';
 //   previosTable[x] = [];
 //   for (let y = 0; y < 8; y += 1) previosTable[x][y] = [];
 // }
-let autoMoveSwitch;
+// let autoMoveSwitch;
 export const DumbBoard = () => {
   // const {
   //   gameState,
@@ -90,8 +90,9 @@ export const DumbBoard = () => {
   const [randomValue, setRandomValue] = useState();
   const [tournamentStats, setTournamentStats] = useState();
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
-  const [keepMoving, setKeepMoving] = useState(false);
-  const [depth, setDepth] = useState(3);
+  const [keepMovingWhite, setKeepMovingWhite] = useState(false);
+  const [keepMovingBlack, setKeepMovingBlack] = useState(false);
+  const [depth, setDepth] = useState(5);
   // const [activeFen, setActiveFen] = useState();
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
@@ -119,10 +120,10 @@ export const DumbBoard = () => {
       ),
     );
 
-    if (keepMoving)
-      setTimeout(() => {
-        makeMove(moves[0]);
-      }, 5);
+    // if (keepMoving)
+    //   setTimeout(() => {
+    //     makeMove(moves[0]);
+    //   }, 5);
   };
 
   useEffect(() => {
@@ -243,6 +244,13 @@ export const DumbBoard = () => {
 
     updateAiDisplay(nextGameState, true);
 
+    if ((keepMovingBlack && !nextGameState.board[64]) || (keepMovingWhite && nextGameState.board[64])) {
+      const { move: nextMove } = await evaluateBoard();
+      setTimeout(() => {
+        makeMove(nextMove);
+      }, 50);
+    }
+
     // console.log({ movesResult });
     // console.log(Math.round(aiResult), aiResult);
 
@@ -271,54 +279,54 @@ export const DumbBoard = () => {
   const indexOfMaxValue = (array) => array.reduce((iMax, x, i, arr) => (x !== null && x > arr[iMax] ? i : iMax), 0);
   const indexOfMinValue = (array) => array.reduce((iMin, x, i, arr) => (x !== null && x < arr[iMin] ? i : iMin), 0);
 
-  const autoMove = async () => {
-    // console.log(gameState);
-    const { nextMoves, wNext, board } = gameState;
-    if (!nextMoves.length) {
-      throw true;
-    }
-    const predictions = await Promise.all(
-      nextMoves.map((move) => {
-        // const movedState = moveInBoard(move, gameState);
-        const movedBoard = getMovedBoard(move, board);
-        return getPrediction({
-          modelName: _modelName,
-          board: movedBoard,
-          repeatedPastFens: gameState.repeatedPastFens,
-        }).then(
-          (pred) => {
-            const pawnMoved = (board[move >>> 10] & 7) === 1;
-            const targetIndex = move & 63;
-            const pawnTurnsQueen = pawnMoved && targetIndex >= 56;
-            // console.log(pawnTurnsQueen);
-            return pred + weights[board[targetIndex] & 7] + (pawnTurnsQueen ? weights[5] - weights[1] : 0);
-          }, //+ (Math.random() - 0.5) / 100, //+ weights[board[move & 63] & 7], //
-        );
-      }),
-    );
+  // const autoMove = async () => {
+  //   // console.log(gameState);
+  //   const { nextMoves, wNext, board } = gameState;
+  //   if (!nextMoves.length) {
+  //     throw true;
+  //   }
+  //   const predictions = await Promise.all(
+  //     nextMoves.map((move) => {
+  //       // const movedState = moveInBoard(move, gameState);
+  //       const movedBoard = getMovedBoard(move, board);
+  //       return getPrediction({
+  //         modelName: _modelName,
+  //         board: movedBoard,
+  //         repeatedPastFens: gameState.repeatedPastFens,
+  //       }).then(
+  //         (pred) => {
+  //           const pawnMoved = (board[move >>> 10] & 7) === 1;
+  //           const targetIndex = move & 63;
+  //           const pawnTurnsQueen = pawnMoved && targetIndex >= 56;
+  //           // console.log(pawnTurnsQueen);
+  //           return pred + weights[board[targetIndex] & 7] + (pawnTurnsQueen ? weights[5] - weights[1] : 0);
+  //         }, //+ (Math.random() - 0.5) / 100, //+ weights[board[move & 63] & 7], //
+  //       );
+  //     }),
+  //   );
 
-    // const moveindex = indexOfMinValue(predictions);
-    // const moveindex = !wNext ? indexOfMinValue(predictions) : Math.floor(Math.random() * predictions.length); //indexOfMinValue(predictions);
-    const moveindex = wNext ? indexOfMaxValue(predictions) : indexOfMinValue(predictions);
+  //   // const moveindex = indexOfMinValue(predictions);
+  //   // const moveindex = !wNext ? indexOfMinValue(predictions) : Math.floor(Math.random() * predictions.length); //indexOfMinValue(predictions);
+  //   const moveindex = wNext ? indexOfMaxValue(predictions) : indexOfMinValue(predictions);
 
-    // console.log({ moveindex, predictions });
-    console.log(
-      nextMoves
-        .map((move, i) => ({ move: move2moveString(move), value: predictions[i] }))
-        .sort((a, b) => (wNext ? b.value - a.value : a.value - b.value))
-        .map(({ move, value }) => `${move} ${value}`)
-        .join('\n'),
-    );
-    makeMove(nextMoves[moveindex]);
-    // console.log({ predictions });
-    // console.log(autoMoveSwitch);
-    // if (autoMoveSwitch)
-    setTimeout(() => {
-      // console.log(autoMoveSwitch);
+  //   // console.log({ moveindex, predictions });
+  //   console.log(
+  //     nextMoves
+  //       .map((move, i) => ({ move: move2moveString(move), value: predictions[i] }))
+  //       .sort((a, b) => (wNext ? b.value - a.value : a.value - b.value))
+  //       .map(({ move, value }) => `${move} ${value}`)
+  //       .join('\n'),
+  //   );
+  //   makeMove(nextMoves[moveindex]);
+  //   // console.log({ predictions });
+  //   // console.log(autoMoveSwitch);
+  //   // if (autoMoveSwitch)
+  //   // setTimeout(() => {
+  //   //   // console.log(autoMoveSwitch);
 
-      if (autoMoveSwitch) autoMove();
-    }, 0);
-  };
+  //   //   // if (autoMoveSwitch) autoMove();
+  //   // }, 0);
+  // };
 
   // const autoMoveSwitched = async (event) => {
   //   const { checked } = event.target;
@@ -341,7 +349,8 @@ export const DumbBoard = () => {
   };
 
   const onFeeMovesCheckboxChange = ({ target: { checked } }) => setFreeMovesChecked(checked);
-  const onAutoMoveChange = ({ target: { checked } }) => setKeepMoving(checked);
+  const onAutoMoveChangeWhite = ({ target: { checked } }) => setKeepMovingWhite(checked);
+  const onAutoMoveChangeBlack = ({ target: { checked } }) => setKeepMovingBlack(checked);
 
   const setWnext = (wNext, game = gameState) => {
     const nextGameState = Object.assign({}, game, { wNext, board: game.board.slice() });
@@ -377,6 +386,7 @@ export const DumbBoard = () => {
       depth,
     });
     setEvalResult(result);
+    return result;
   };
 
   return (
@@ -497,9 +507,16 @@ export const DumbBoard = () => {
           </Formfield>
 
           <Formfield>
-            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChange} checked={keepMoving} />
+            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChangeWhite} checked={keepMovingWhite} />
             <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
-              Auto move
+              Auto move white
+            </label>
+          </Formfield>
+
+          <Formfield>
+            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChangeBlack} checked={keepMovingBlack} />
+            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
+              Auto move black
             </label>
           </Formfield>
 
