@@ -19,6 +19,7 @@ import { getMovedBoard } from '../../../../chss-module-engine/src/engine_new/uti
 import Button from 'preact-material-components/Button';
 import { startTournament } from '../../../services/tournamentService';
 import TextField from 'preact-material-components/TextField';
+import { Select, SelectOption } from 'preact-material-components/Select';
 
 import Checkbox from 'preact-material-components/Checkbox';
 import 'preact-material-components/Checkbox/style.css';
@@ -30,6 +31,12 @@ import Formfield from 'preact-material-components/FormField';
 import { getPrediction } from '../../../../chss-module-engine/src/engine_new/tfModels/getPrediction';
 import { getMoveSorter } from '../../../../chss-module-engine/src/engine_new/moveGenerators/getMoveSorter';
 import { aiWorker } from '../../workerFrame';
+
+// const evalMethods = {
+//   localSingleThread: {},
+// };
+
+const highlightMethods = ['Off', 'Legacy', 'OneHot (server)'];
 
 // const _modelName = '0.03606-e8-1644187281482';
 // const _modelName = '0.00473-1641230911613_s1000k_e20'; //can count pieces
@@ -93,6 +100,7 @@ export const DumbBoard = () => {
   const [keepMovingWhite, setKeepMovingWhite] = useState(false);
   const [keepMovingBlack, setKeepMovingBlack] = useState(false);
   const [depth, setDepth] = useState(5);
+  const [highlightMethod, setHighlightMethod] = useState(highlightMethods[0]);
   // const [activeFen, setActiveFen] = useState();
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
@@ -105,7 +113,7 @@ export const DumbBoard = () => {
   const { board, nextMoves, bitBoard: _bitBoard } = gameState;
   // const changedIndexes = getChangedIndexes(board);
 
-  const updateAiDisplay = async (nextGameState) => {
+  const updateAiDisplayOldMethod = async ({ nextGameState }) => {
     const moveSorter = await getMoveSorter(nextGameState.board);
     const moves = nextGameState.nextMoves.slice().sort(moveSorter);
     setWinningMove(move2moveString(moves[0]));
@@ -119,16 +127,46 @@ export const DumbBoard = () => {
         }),
       ),
     );
+  };
 
-    // if (keepMoving)
-    //   setTimeout(() => {
-    //     makeMove(moves[0]);
-    //   }, 5);
+  const updateAiDisplayOneHotMethod = async ({ nextGameState }) => {
+    const moveSorter = await getMoveSorter(nextGameState.board);
+    const moves = nextGameState.nextMoves.slice().sort(moveSorter);
+    setWinningMove(move2moveString(moves[0]));
+
+    setAiMovesResult(
+      normalizeToOneGrouped(
+        await getPrediction({
+          modelName: _movesModelName,
+          board: nextGameState.board,
+          repeatedPastFens: nextGameState.repeatedPastFens,
+        }),
+      ),
+    );
+  };
+
+  const clearHighlights = () => {
+    console.log('clearing highlights');
+    setWinningMove(null);
+    setAiMovesResult([]);
+  };
+
+  const updateAiDisplay = async (nextGameState) => {
+    switch (highlightMethod) {
+      case 'OneHot (server)':
+        updateAiDisplayOneHotMethod({ nextGameState });
+        break;
+      case 'Legacy':
+        updateAiDisplayOldMethod({ nextGameState });
+        break;
+      default:
+        clearHighlights();
+    }
   };
 
   useEffect(() => {
     updateAiDisplay(gameState);
-  }, []);
+  }, [highlightMethod]);
 
   // const userCanMove = userId === gameState[board[64] ? "wPlayer" : "bPlayer"];
 
@@ -245,9 +283,12 @@ export const DumbBoard = () => {
     updateAiDisplay(nextGameState, true);
 
     if ((keepMovingBlack && !nextGameState.board[64]) || (keepMovingWhite && nextGameState.board[64])) {
+      setEvalResult({});
+
       const { move: nextMove } = await evaluateBoard();
       setTimeout(() => {
         makeMove(nextMove);
+        setEvalResult(result);
       }, 50);
     }
 
@@ -359,7 +400,7 @@ export const DumbBoard = () => {
   };
 
   const onWhitesMoveCheckboxChange = async ({ target: { checked } }) => {
-    console.log('aaaaaa');
+    // console.log('aaaaaa');
 
     const nextGameState = setWnext(checked);
     // const nextGameState = Object.assign({}, gameState, { wNext: checked, board: board.slice() });
@@ -377,17 +418,13 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
-  const evaluateBoard = async () => {
-    setEvalResult({});
-    const result = await aiWorker.do('ai', {
-      method: 'localSingleThread',
+  const evaluateBoard = ({ method = 'localSingleThread' } = {}) =>
+    aiWorker.do('ai', {
+      method,
       board: gameState.board,
       moves: gameState.nextMoves,
       depth,
     });
-    setEvalResult(result);
-    return result;
-  };
 
   return (
     <div className={style.dumbBoardContainer}>
@@ -460,9 +497,13 @@ export const DumbBoard = () => {
                   .padStart(2, '0');
               };
 
-              const aiMoveSourceCol = getColorFromIndex(rowIndex * 8 + colIndex);
-              const aiMoveTargetCol = getColorFromIndex(rowIndex * 8 + colIndex + 64);
-              const aiBorder = `5px solid #${aiMoveSourceCol}00${aiMoveTargetCol}`;
+              // const aiMoveSourceCol = ;
+              // const aiMoveTargetCol = ;
+              const aiBorder = aiMovesResult.length
+                ? `5px solid #${getColorFromIndex(rowIndex * 8 + colIndex)}00${getColorFromIndex(
+                    rowIndex * 8 + colIndex + 64,
+                  )}`
+                : 'none';
               // console.log({ aiBorder });
 
               return (
@@ -500,10 +541,6 @@ export const DumbBoard = () => {
               onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
               outerStyle={{ 'min-width': '-webkit-fill-available' }}
             />
-            {/* <input
-              value={board2fen(gameState.board)}
-              onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
-            /> */}
           </Formfield>
 
           <Formfield>
@@ -558,8 +595,38 @@ export const DumbBoard = () => {
           {winningMove}
 
           <div>
-            <Button onClick={evaluateBoard}>Evaluate</Button>
-            <input value={depth} onChange={(e) => setDepth(Number(e.target.value))} />
+            <Button
+              onClick={async () => {
+                setEvalResult({});
+                const result = await evaluateBoard();
+                // console.log({ result });
+                setEvalResult(result);
+              }}
+            >
+              Evaluate
+            </Button>
+
+            <Formfield>
+              <Select onChange={(e) => setDepth(Number(e.target.value))} selectedIndex={depth - 2} hintText="Depth">
+                {[3, 4, 5, 6, 7].map((option) => (
+                  <SelectOption value={option}>{option}</SelectOption>
+                ))}
+              </Select>
+            </Formfield>
+
+            <Formfield>
+              <Select
+                onChange={(e) => setHighlightMethod(e.target.value)}
+                selectedIndex={highlightMethods.indexOf(highlightMethod) + 1}
+                hintText="Highlight hints"
+              >
+                {highlightMethods.map((option) => (
+                  <SelectOption value={option}>{option}</SelectOption>
+                ))}
+              </Select>
+            </Formfield>
+
+            {/* <input value={depth} onChange={(e) => setDepth(Number(e.target.value))} /> */}
             <div className={style.smallerText}>
               <pre>{JSON.stringify(evalResult, null, 2)}</pre>
             </div>
