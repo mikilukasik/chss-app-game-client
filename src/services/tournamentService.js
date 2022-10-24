@@ -203,7 +203,7 @@ const makeMove = async ({ game, modelName, randomValue = 0 }) => {
 
   const { moveValues } = await getPrediction({ game, modelName });
   const sortedMoves = nextMoves.sort((a, b) => moveValues[b] - moveValues[a]);
-  console.log({ s: sortedMoves.map(move2moveString) });
+  // console.log({ s: sortedMoves.map(move2moveString) });
 
   const move = sortedMoves[0];
   const nextGameState = moveInBoard(move, game);

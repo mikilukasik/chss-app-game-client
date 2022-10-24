@@ -77,6 +77,11 @@
   // font-size: 3em;
 }
 
+.rightBar {
+  overflow: scroll;
+  height: 800px;
+}
+
 
 @media (min-width: 530px) {
   .boardContainer {

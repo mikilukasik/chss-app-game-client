@@ -14,6 +14,9 @@ const playerSocketAwaiters = [];
 let _predictionSocket;
 const predictionSocketAwaiters = [];
 
+let _modelStoreSocket;
+const modelStoreSocketAwaiters = [];
+
 let _currentGameUpdater;
 const currentGameUpdaterAwaiters = [];
 
@@ -69,6 +72,17 @@ export const getPredictionSocket = () =>
 export const usePredictionSocket = (predictionSocket) => {
   _predictionSocket = predictionSocket;
   predictionSocketAwaiters.forEach((resolve) => resolve(predictionSocket));
+};
+
+export const getModelStoreSocket = () =>
+  new Promise((resolve) => {
+    if (_modelStoreSocket) return resolve(_modelStoreSocket);
+    modelStoreSocketAwaiters.push(resolve);
+  });
+
+export const useModelStoreSocket = (modelStoreSocket) => {
+  _modelStoreSocket = modelStoreSocket;
+  modelStoreSocketAwaiters.forEach((resolve) => resolve(_modelStoreSocket));
 };
 
 export const getCurrentGameUpdater = () =>

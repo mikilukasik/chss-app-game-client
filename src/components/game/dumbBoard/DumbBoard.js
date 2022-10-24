@@ -8,7 +8,12 @@ import { ProgressBar } from '../progressBar';
 import UserContext from '../../../context/UserContext';
 import { MovePager } from '../movePager';
 import { ReplayBoard } from '../replayBoard';
-import { getPlayerSocket, setCurrentGameState, getPredictionSocket } from '../../../services/gamesService';
+import {
+  getPlayerSocket,
+  setCurrentGameState,
+  getPredictionSocket,
+  getModelStoreSocket,
+} from '../../../services/gamesService';
 import { toNested } from '../../../utils/toNested';
 import { move2moveString } from '../../../../../chss-module-engine/src/engine_new/transformers/move2moveString';
 import { getPieceBalance } from '../../../../chss-module-engine/src/engine_new/evaluators/evaluateBoard';
@@ -100,6 +105,7 @@ export const DumbBoard = () => {
   const [highlightMethod, setHighlightMethod] = useState('Inc');
   const [highlightsFor, setHighlightsFor] = useState('None');
   const [moveToHighlighted, setMoveToHighlighted] = useState(false);
+  const [allModelNames, setAllModelNames] = useState([]);
   // const [activeFen, setActiveFen] = useState();
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
@@ -136,16 +142,17 @@ export const DumbBoard = () => {
       .map((move, i) => ({ move, val: response.moveStringValues[move] }))
       .sort((a, b) => b.val - a.val);
 
-    if (moveToHighlighted) {
-      const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
-      if (winningMove) {
-      }
-    }
+    // if (moveToHighlighted) {
+    //   const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
+    //   if (winningMove) {
+    //     makeMove(moveString2move(winningMove.move));
+    //   }
+    // }
 
     // let greenMarked;
     setWinningMove(
       <table>
-        {sortedMoves.slice(0, 10).map(({ move, val }, i) => (
+        {sortedMoves.slice(0, 50).map(({ move, val }, i) => (
           <tr>
             <td
               style={
@@ -165,10 +172,11 @@ export const DumbBoard = () => {
         ))}
       </table>,
     );
-
+    console.log({ moveToHighlighted });
     if (moveToHighlighted) {
       const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
       if (winningMove) {
+        console.log('bububu');
         makeMove(moveString2move(winningMove.move));
       }
     }
@@ -193,13 +201,22 @@ export const DumbBoard = () => {
     setAiMovesResult([]);
   };
 
-  const updateAiDisplayHandlers = {
-    Pg_SL: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_SL' }),
-    Pg_large: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_large' }),
-    Pg_small: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_small' }),
-    Pg_tiny: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_tiny' }),
-    OneHot: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'oneHot' }),
-    Inc: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'inc' }),
+  useEffect(async () => {
+    const modelStoreSocket = await getModelStoreSocket();
+    const modelNames = await modelStoreSocket.do('getAllModelNames', { requiredFiles: ['loader.js'] });
+    // console.log(modelNames);
+
+    setAllModelNames(modelNames);
+  }, []);
+
+  const aiDisplayHandlers = {
+    // Pg_SL: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_SL' }),
+    // Pg_large: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_large' }),
+    // Pg_small: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_small' }),
+    // Pg_tiny: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_tiny' }),
+    // Eval_small: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'eval_small' }),
+    // OneHot: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'oneHot' }),
+    // Inc: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'inc' }),
     Legacy: updateAiDisplayOldMethod,
     Off: clearHighlights,
   };
@@ -215,7 +232,10 @@ export const DumbBoard = () => {
     const { black, white } = highlightOptions[highlightsFor];
     const { wNext } = gameState;
     if ((wNext && white) || (!wNext && black))
-      return (updateAiDisplayHandlers[highlightMethod] || clearHighlights)({ nextGameState });
+      return (
+        aiDisplayHandlers[highlightMethod] ||
+        (({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: highlightMethod }))
+      )({ nextGameState });
     clearHighlights();
   };
 
@@ -591,7 +611,7 @@ export const DumbBoard = () => {
 
         {/* <MovePager {...{ replayMoveNumber, setReplayMoveNumber, gameState }} /> */}
       </div>
-      <div>
+      <div class={style.rightBar}>
         <div>
           <Formfield>
             <TextField
@@ -603,15 +623,25 @@ export const DumbBoard = () => {
           </Formfield>
 
           <Formfield>
-            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChangeWhite} checked={keepMovingWhite} />
-            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
+            <Checkbox
+              id="auto-move-checkboxw"
+              size="small"
+              onChange={onAutoMoveChangeWhite}
+              checked={keepMovingWhite}
+            />
+            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkboxw" id="auto-move-checkboxw-label">
               Auto move white
             </label>
           </Formfield>
 
           <Formfield>
-            <Checkbox id="auto-move-checkbox" size="small" onChange={onAutoMoveChangeBlack} checked={keepMovingBlack} />
-            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkbox" id="auto-move-checkbox-label">
+            <Checkbox
+              id="auto-move-checkboxb"
+              size="small"
+              onChange={onAutoMoveChangeBlack}
+              checked={keepMovingBlack}
+            />
+            <label className={style.freeMovesCheckboxLabel} for="auto-move-checkboxb" id="auto-move-checkboxb-label">
               Auto move black
             </label>
           </Formfield>
@@ -636,7 +666,11 @@ export const DumbBoard = () => {
                 onChange={onWhitesMoveCheckboxChange}
                 checked={gameState.wNext}
               />
-              <label className={style.freeMovesCheckboxLabel} for="free-moves-checkbox" id="free-moves-checkbox-label">
+              <label
+                className={style.freeMovesCheckboxLabel}
+                for="whites-move-checkbox"
+                id="whites-move-checkbox-label"
+              >
                 White's move
               </label>
             </Formfield>
@@ -651,7 +685,6 @@ export const DumbBoard = () => {
           {/* <input type="checkbox">Free moves</input> */}
           {aiResult?.toFixed(3)}
           <br />
-          {winningMove}
 
           <div>
             <Button
@@ -688,23 +721,29 @@ export const DumbBoard = () => {
             <Formfield>
               <Select
                 onChange={(e) => setHighlightMethod(e.target.value)}
-                selectedIndex={Object.keys(updateAiDisplayHandlers).indexOf(highlightMethod) + 1}
+                selectedIndex={Object.keys(aiDisplayHandlers).concat(allModelNames).indexOf(highlightMethod) + 1}
                 hintText="Highlight hints"
               >
-                {Object.keys(updateAiDisplayHandlers).map((option) => (
-                  <SelectOption value={option}>{option}</SelectOption>
-                ))}
+                {Object.keys(aiDisplayHandlers)
+                  .concat(allModelNames)
+                  .map((option) => (
+                    <SelectOption value={option}>{option}</SelectOption>
+                  ))}
               </Select>
             </Formfield>
 
             <Formfield>
               <Checkbox
-                id="whites-move-checkbox"
+                id="auto-move-highlighted-checkbox"
                 size="small"
                 onChange={() => setMoveToHighlighted(!moveToHighlighted)}
                 checked={moveToHighlighted}
               />
-              <label className={style.freeMovesCheckboxLabel} for="free-moves-checkbox" id="free-moves-checkbox-label">
+              <label
+                className={style.freeMovesCheckboxLabel}
+                for="auto-move-highlighted-checkbox"
+                id="auto-move-highlighted-checkbox-label"
+              >
                 Auto move to highlighted
               </label>
             </Formfield>
@@ -713,6 +752,8 @@ export const DumbBoard = () => {
             <div className={style.smallerText}>
               <pre>{JSON.stringify(evalResult, null, 2)}</pre>
             </div>
+
+            {winningMove}
           </div>
 
           {/* <span>
