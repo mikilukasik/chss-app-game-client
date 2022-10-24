@@ -5,7 +5,7 @@ import { msgClient } from '../msg/src/client';
 import { clientLogger } from '../chss-module-logger';
 import { ensureClientIdCookie } from './services/cookieService';
 import { setUser } from './services/userService';
-import { usePlayerSocket } from './services/gamesService';
+import { usePlayerSocket, usePredictionSocket } from './services/gamesService';
 import { debugService } from './services/debugService';
 import { useTournamentSocket } from './services/tournamentService';
 import { useTaskSocket } from './services/taskService';
@@ -35,6 +35,11 @@ export const getAuthSocket = () =>
     `ws://${typeof window === 'undefined' || window.location.hostname}:3300/playerSocket`,
   );
   usePlayerSocket(playerSocket);
+
+  const predictionSocket = msgClient.ws(
+    `ws://${typeof window === 'undefined' || window.location.hostname}:3300/predictionSocket`,
+  );
+  usePredictionSocket(predictionSocket);
 
   const tournamentSocket = msgClient.ws(
     `ws://${typeof window === 'undefined' || window.location.hostname}:3300/tournamentSocket`,

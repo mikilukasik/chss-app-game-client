@@ -3,12 +3,12 @@ import style from './style.scss';
 
 import { useContext, useEffect, useState, useCallback } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
-import { moveInBoard } from '../../../../chss-module-engine/src/engine/engine';
+import { moveInBoard, moveString2move } from '../../../../chss-module-engine/src/engine/engine';
 import { ProgressBar } from '../progressBar';
 import UserContext from '../../../context/UserContext';
 import { MovePager } from '../movePager';
 import { ReplayBoard } from '../replayBoard';
-import { getPlayerSocket, setCurrentGameState } from '../../../services/gamesService';
+import { getPlayerSocket, setCurrentGameState, getPredictionSocket } from '../../../services/gamesService';
 import { toNested } from '../../../utils/toNested';
 import { move2moveString } from '../../../../../chss-module-engine/src/engine_new/transformers/move2moveString';
 import { getPieceBalance } from '../../../../chss-module-engine/src/engine_new/evaluators/evaluateBoard';
@@ -17,7 +17,6 @@ import * as tf from '@tensorflow/tfjs';
 import { board2fen } from '../../../../chss-module-engine/src/engine_new/transformers/board2fen';
 import { getMovedBoard } from '../../../../chss-module-engine/src/engine_new/utils/getMovedBoard';
 import Button from 'preact-material-components/Button';
-import { startTournament } from '../../../services/tournamentService';
 import TextField from 'preact-material-components/TextField';
 import { Select, SelectOption } from 'preact-material-components/Select';
 
@@ -36,7 +35,7 @@ import { aiWorker } from '../../workerFrame';
 //   localSingleThread: {},
 // };
 
-const highlightMethods = ['Off', 'Legacy', 'OneHot (server)'];
+// const highlightMethods = ['Off', 'Legacy', 'OneHot (server)'];
 
 // const _modelName = '0.03606-e8-1644187281482';
 // const _modelName = '0.00473-1641230911613_s1000k_e20'; //can count pieces
@@ -93,14 +92,14 @@ export const DumbBoard = () => {
   const [aiResult, setAiResult] = useState();
   const [aiMovesResult, setAiMovesResult] = useState([]);
   const [winningMove, setWinningMove] = useState('');
-  const [rounds, setRounds] = useState();
-  const [randomValue, setRandomValue] = useState();
-  const [tournamentStats, setTournamentStats] = useState();
+
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
   const [keepMovingWhite, setKeepMovingWhite] = useState(false);
   const [keepMovingBlack, setKeepMovingBlack] = useState(false);
   const [depth, setDepth] = useState(5);
-  const [highlightMethod, setHighlightMethod] = useState(highlightMethods[0]);
+  const [highlightMethod, setHighlightMethod] = useState('Inc');
+  const [highlightsFor, setHighlightsFor] = useState('None');
+  const [moveToHighlighted, setMoveToHighlighted] = useState(false);
   // const [activeFen, setActiveFen] = useState();
   // const [autoMoveSwitch, setAutoMoveSwitch] = useState(false);
   // const [progressTotal, setProgressTotal] = useState();
@@ -129,20 +128,63 @@ export const DumbBoard = () => {
     );
   };
 
-  const updateAiDisplayOneHotMethod = async ({ nextGameState }) => {
-    const moveSorter = await getMoveSorter(nextGameState.board);
-    const moves = nextGameState.nextMoves.slice().sort(moveSorter);
-    setWinningMove(move2moveString(moves[0]));
+  const updateAiDisplayOneHotMethod = async ({ nextGameState, modelName = 'oneHot' }) => {
+    const predictionSocket = await getPredictionSocket();
+    const response = await predictionSocket.do('predictMove', { game: nextGameState, modelName });
 
-    setAiMovesResult(
-      normalizeToOneGrouped(
-        await getPrediction({
-          modelName: _movesModelName,
-          board: nextGameState.board,
-          repeatedPastFens: nextGameState.repeatedPastFens,
-        }),
-      ),
+    const sortedMoves = Object.keys(response.moveStringValues)
+      .map((move, i) => ({ move, val: response.moveStringValues[move] }))
+      .sort((a, b) => b.val - a.val);
+
+    if (moveToHighlighted) {
+      const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
+      if (winningMove) {
+      }
+    }
+
+    // let greenMarked;
+    setWinningMove(
+      <table>
+        {sortedMoves.slice(0, 10).map(({ move, val }, i) => (
+          <tr>
+            <td
+              style={
+                !gameState.nextMoves.includes(moveString2move(move))
+                  ? { color: 'red' }
+                  : {
+                      color: `#00${Math.floor(Math.max(0, Math.min(1, val)) * 255)
+                        .toString(16)
+                        .padStart(2, 0)}00`,
+                    }
+              }
+            >
+              {move}
+            </td>
+            <td>{val}</td>
+          </tr>
+        ))}
+      </table>,
     );
+
+    if (moveToHighlighted) {
+      const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
+      if (winningMove) {
+        makeMove(moveString2move(winningMove.move));
+      }
+    }
+    // const moveSorter = await getMoveSorter(nextGameState.board);
+    // const moves = nextGameState.nextMoves.slice().sort(moveSorter);
+    // setWinningMove(move2moveString(moves[0]));
+
+    // setAiMovesResult(
+    //   normalizeToOneGrouped(
+    //     await getPrediction({
+    //       modelName: _movesModelName,
+    //       board: nextGameState.board,
+    //       repeatedPastFens: nextGameState.repeatedPastFens,
+    //     }),
+    //   ),
+    // );
   };
 
   const clearHighlights = () => {
@@ -151,17 +193,30 @@ export const DumbBoard = () => {
     setAiMovesResult([]);
   };
 
+  const updateAiDisplayHandlers = {
+    Pg_SL: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_SL' }),
+    Pg_large: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_large' }),
+    Pg_small: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_small' }),
+    Pg_tiny: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'pg_tiny' }),
+    OneHot: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'oneHot' }),
+    Inc: ({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: 'inc' }),
+    Legacy: updateAiDisplayOldMethod,
+    Off: clearHighlights,
+  };
+
+  const highlightOptions = {
+    None: { black: false, white: false },
+    White: { black: false, white: true },
+    Black: { black: true, white: false },
+    Both: { black: true, white: true },
+  };
+
   const updateAiDisplay = async (nextGameState) => {
-    switch (highlightMethod) {
-      case 'OneHot (server)':
-        updateAiDisplayOneHotMethod({ nextGameState });
-        break;
-      case 'Legacy':
-        updateAiDisplayOldMethod({ nextGameState });
-        break;
-      default:
-        clearHighlights();
-    }
+    const { black, white } = highlightOptions[highlightsFor];
+    const { wNext } = gameState;
+    if ((wNext && white) || (!wNext && black))
+      return (updateAiDisplayHandlers[highlightMethod] || clearHighlights)({ nextGameState });
+    clearHighlights();
   };
 
   useEffect(() => {
@@ -246,7 +301,10 @@ export const DumbBoard = () => {
     ...normalizeToOne(longArr.slice(64)),
   ];
 
+  // 1k6/pp3p2/2pb2p1/3p4/3P3r/4BP2/PP2BP2/R1R2K1r w - - 0 1
+
   const makeMove = async (move) => {
+    console.log({ move });
     const origWnext = gameState.wNext;
     let nextGameState = moveInBoard(move, gameState);
 
@@ -285,10 +343,17 @@ export const DumbBoard = () => {
     if ((keepMovingBlack && !nextGameState.board[64]) || (keepMovingWhite && nextGameState.board[64])) {
       setEvalResult({});
 
+      console.log('hello1');
       const { move: nextMove } = await evaluateBoard();
+      console.log('hello2');
+
       setTimeout(() => {
+        console.log('hello3', nextMove);
+
         makeMove(nextMove);
-        setEvalResult(result);
+        console.log('hello4');
+
+        setEvalResult(nextMove);
       }, 50);
     }
 
@@ -377,18 +442,6 @@ export const DumbBoard = () => {
   //   if (checked) autoMove();
   // };
 
-  const startTournamentClickHandler = () => {
-    startTournament({
-      rounds,
-      randomValue,
-      displayedGameUpdater: setGameState,
-      // (game) => {
-      //   if (Math.random() > 0.95) setGameState(game);
-      // },
-      displayedStatsUpdater: setTournamentStats,
-    });
-  };
-
   const onFeeMovesCheckboxChange = ({ target: { checked } }) => setFreeMovesChecked(checked);
   const onAutoMoveChangeWhite = ({ target: { checked } }) => setKeepMovingWhite(checked);
   const onAutoMoveChangeBlack = ({ target: { checked } }) => setKeepMovingBlack(checked);
@@ -419,6 +472,12 @@ export const DumbBoard = () => {
   };
 
   const evaluateBoard = ({ method = 'localSingleThread' } = {}) =>
+    console.log('ai', {
+      method,
+      board: gameState.board,
+      moves: gameState.nextMoves,
+      depth,
+    }) ||
     aiWorker.do('ai', {
       method,
       board: gameState.board,
@@ -616,14 +675,38 @@ export const DumbBoard = () => {
 
             <Formfield>
               <Select
-                onChange={(e) => setHighlightMethod(e.target.value)}
-                selectedIndex={highlightMethods.indexOf(highlightMethod) + 1}
-                hintText="Highlight hints"
+                onChange={(e) => setHighlightsFor(e.target.value)}
+                selectedIndex={Object.keys(highlightOptions).indexOf(highlightsFor) + 1}
+                hintText="Hints for player"
               >
-                {highlightMethods.map((option) => (
+                {Object.keys(highlightOptions).map((option) => (
                   <SelectOption value={option}>{option}</SelectOption>
                 ))}
               </Select>
+            </Formfield>
+
+            <Formfield>
+              <Select
+                onChange={(e) => setHighlightMethod(e.target.value)}
+                selectedIndex={Object.keys(updateAiDisplayHandlers).indexOf(highlightMethod) + 1}
+                hintText="Highlight hints"
+              >
+                {Object.keys(updateAiDisplayHandlers).map((option) => (
+                  <SelectOption value={option}>{option}</SelectOption>
+                ))}
+              </Select>
+            </Formfield>
+
+            <Formfield>
+              <Checkbox
+                id="whites-move-checkbox"
+                size="small"
+                onChange={() => setMoveToHighlighted(!moveToHighlighted)}
+                checked={moveToHighlighted}
+              />
+              <label className={style.freeMovesCheckboxLabel} for="free-moves-checkbox" id="free-moves-checkbox-label">
+                Auto move to highlighted
+              </label>
             </Formfield>
 
             {/* <input value={depth} onChange={(e) => setDepth(Number(e.target.value))} /> */}

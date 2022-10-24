@@ -72,15 +72,11 @@
 }
 
 .aiResult {
-  font-weight: bold;
-  font-size: 3em;
+  color:black
+  // font-weight: bold;
+  // font-size: 3em;
 }
 
-.tournamentStats {
-  font-size: 14px;
-  background-color: #ddd;
-  color: #222;
-}
 
 @media (min-width: 530px) {
   .boardContainer {

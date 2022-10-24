@@ -9,12 +9,38 @@ setWasmPaths('/assets/wasm_bin/');
 
 import { board2fen } from '../../chss-module-engine/src/engine_new/transformers/board2fen';
 import { moveInBoard } from '../../chss-module-engine/src/engine/engine';
+import { move2moveString } from '../../../chss-module-engine/src/engine_new/transformers/move2moveString';
 // tf.setBackend('cpu');
 
 let _tournamentSocket;
 const tournamentSocketAwaiters = [];
 
 let wasmInited = false;
+
+const loadedModels = {};
+
+// const getModel = async ({ modelName }) => {
+//   if (loadedModels[modelName]) return loadedModels[modelName];
+
+//   console.log(`Loading model ${modelName}...`);
+
+//   let loader;
+//   eval(await (await fetch(`http://localhost:3300/models/${modelName}/loader.js`)).text());
+
+//   const { predict } = await loader({
+//     tf,
+//     modelUrl: `http://localhost:3300/models/${modelName}/model.json`,
+//   });
+
+//   loadedModels[modelName] = { predict }; //{ model, transforms };
+//   return loadedModels[modelName];
+// };
+
+// export const predictMove = async ({ game, modelName }) => {
+//   const { predict } = await getModel({ modelName });
+//   return predict({ game });
+// };
+
 export const getTournamentSocket = async () => {
   if (!wasmInited)
     await tf.setBackend('wasm').then((success) => {
@@ -62,12 +88,23 @@ const loadTfModel = async (modelName) => {
 };
 
 const loadModel = async (name) => {
-  const [model, transform, constants] = await Promise.all([
-    loadTfModel(name),
-    loadTransform(name),
-    loadConstants(name),
-  ]).catch(console.error);
-  models[name] = { model, transform, constants };
+  // const [model, transform, constants] = await Promise.all([
+  //   loadTfModel(name),
+  //   loadTransform(name),
+  //   loadConstants(name),
+  // ]).catch(console.error);
+  // models[name] = { model, transform, constants };
+
+  let loader;
+  eval(await (await fetch(`http://localhost:3300/models/${name}/loader.js`)).text());
+
+  const { predict } = await loader({
+    tf,
+    modelUrl: `http://localhost:3300/models/${name}/model.json`,
+  });
+
+  models[name] = { predict };
+
   console.log(`tf model ${name} loaded`);
 
   while (getModelResolvers[name].length) getModelResolvers[name].pop()(models[name]);
@@ -84,45 +121,51 @@ const getModel = (name) =>
     }
   });
 
-export const getPrediction = async ({ modelName, board, randomValue, repeatedPastFens = [], noLoop = false }) => {
+export const getPrediction = async ({
+  game /*, board, randomValue, repeatedPastFens = [], noLoop = false */,
+  modelName,
+}) => {
   const {
-    model,
-    transform,
-    constants: { castlingIndex, enPassantIndex, inputLength, needsWNext },
+    // model,
+    // transform,
+    // constants: { castlingIndex, enPassantIndex, inputLength, needsWNext },
+    predict,
   } = await getModel(modelName);
 
-  let fenStr = board2fen(board);
-  let needsInverseOutput = false;
-  if (needsWNext) {
-    const { fen, mirrored } = transform.getWhiteNextFen({ fen: fenStr });
-    fenStr = fen;
-    needsInverseOutput = mirrored;
-  }
+  return predict({ game });
 
-  if (noLoop && repeatedPastFens.length && repeatedPastFens.includes(fenStr)) {
-    return null;
-  }
+  // let fenStr = board2fen(board);
+  // let needsInverseOutput = false;
+  // if (needsWNext) {
+  //   const { fen, mirrored } = transform.getWhiteNextFen({ fen: fenStr });
+  //   fenStr = fen;
+  //   needsInverseOutput = mirrored;
+  // }
 
-  // if (repeatedPastFens.includes(fenStr))
+  // if (noLoop && repeatedPastFens.length && repeatedPastFens.includes(fenStr)) {
+  //   return null;
+  // }
 
-  const inputTensor = tf.tensor(transform.fen2flatArray({ fenStr, castlingIndex, enPassantIndex }), [
-    1,
-    8,
-    8,
-    inputLength,
-  ]);
-  const outputTensor = model.predict(inputTensor);
+  // // if (repeatedPastFens.includes(fenStr))
 
-  console.log({ needsInverseOutput });
+  // const inputTensor = tf.tensor(transform.fen2flatArray({ fenStr, castlingIndex, enPassantIndex }), [
+  //   1,
+  //   8,
+  //   8,
+  //   inputLength,
+  // ]);
+  // const outputTensor = model.predict(inputTensor);
 
-  let output = (await outputTensor.data())[0]; //+ randomValue * Math.random();
-  if (needsInverseOutput) output *= -1;
-  // const output = (await outputTensor.data())[0];
+  // console.log({ needsInverseOutput });
 
-  inputTensor.dispose();
-  outputTensor.dispose();
-  console.log({ output });
-  return output;
+  // let output = (await outputTensor.data())[0]; //+ randomValue * Math.random();
+  // if (needsInverseOutput) output *= -1;
+  // // const output = (await outputTensor.data())[0];
+
+  // inputTensor.dispose();
+  // outputTensor.dispose();
+  // console.log({ output });
+  // return output;
 };
 
 const indexOfMaxValue = (array) => array.reduce((iMax, x, i, arr) => (x !== null && x > arr[iMax] ? i : iMax), 0);
@@ -148,15 +191,21 @@ const makeMove = async ({ game, modelName, randomValue = 0 }) => {
   //   taskBatch.length = 0;
   //   // predictions[nextMoveIndex] = await getPrediction(modelName, movedBoard);
   // }
-  const predictions = await Promise.all(
-    nextMoves.map((move) => {
-      const movedBoard = getMovedBoard(move, board);
-      return getPrediction({ modelName, board: movedBoard, randomValue, repeatedPastFens, noLoop: true });
-    }),
-  );
 
-  const moveindex = wNext ? indexOfMaxValue(predictions) : indexOfMinValue(predictions);
-  const move = nextMoves[moveindex];
+  // const predictions = await Promise.all(
+  //   nextMoves.map((move) => {
+  //     const movedBoard = getMovedBoard(move, board);
+  //     return getPrediction({ modelName, board: movedBoard, randomValue, repeatedPastFens, noLoop: true });
+  //   }),
+  // );
+
+  // const moveindex = wNext ? indexOfMaxValue(predictions) : indexOfMinValue(predictions);
+
+  const { moveValues } = await getPrediction({ game, modelName });
+  const sortedMoves = nextMoves.sort((a, b) => moveValues[b] - moveValues[a]);
+  console.log({ s: sortedMoves.map(move2moveString) });
+
+  const move = sortedMoves[0];
   const nextGameState = moveInBoard(move, game);
   // console.log(game.thinkingTimes);
   return { nextGameState };
