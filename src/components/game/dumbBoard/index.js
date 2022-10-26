@@ -1,1 +1,1 @@
-export { DumbBoard } from "./DumbBoard";
+export { DumbBoard } from './DumbBoard';

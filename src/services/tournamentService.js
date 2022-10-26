@@ -45,7 +45,7 @@ export const getTournamentSocket = async () => {
   if (!wasmInited)
     await tf.setBackend('wasm').then((success) => {
       wasmInited = success;
-      console.log(`wasm init success: ${success}`);
+      // console.log(`wasm init success: ${success}`);
     }, console.error);
 
   return new Promise((resolve) => {
