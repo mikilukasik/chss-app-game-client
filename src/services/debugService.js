@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { getLegalMoveCountThrowMethod } from '../../../chss-module-engine/src/engine_new/testUtils/getLegalMoveCountThrowMethod';
 import { board2fen } from '../../../chss-module-engine/src/engine_new/transformers/board2fen';
 import { move2moveString } from '../../../chss-module-engine/src/engine_new/transformers/move2moveString';
+import { moveString2move } from '../../../chss-module-engine/src/engine_new/transformers/moveString2move';
 import { getMovedBoard } from '../../../chss-module-engine/src/engine_new/utils/getMovedBoard';
 import { GameModel } from '../../../chss-module-engine/src/model/Game';
 import { fen2intArray } from '../../../chss-service-game-handler/chss-module-engine/src/engine_new/transformers/fen2intArray';
@@ -89,5 +90,6 @@ export const debugService = async () => {
     board2fen,
     fen2intArray,
     move2moveString,
+    moveString2move,
   });
 };

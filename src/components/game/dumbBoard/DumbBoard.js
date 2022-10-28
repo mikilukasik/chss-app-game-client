@@ -23,6 +23,8 @@ import { board2fen } from '../../../../chss-module-engine/src/engine_new/transfo
 import { getMovedBoard } from '../../../../chss-module-engine/src/engine_new/utils/getMovedBoard';
 import Button from 'preact-material-components/Button';
 import TextField from 'preact-material-components/TextField';
+import 'preact-material-components/TextField/style.css';
+
 import { Select, SelectOption } from 'preact-material-components/Select';
 
 import Checkbox from 'preact-material-components/Checkbox';
@@ -45,7 +47,7 @@ const _movesModelName = 'moves_0.02679-e1-1652876197395';
 export const DumbBoard = () => {
   const [moveSourceCell, setMoveSourceCell] = useState();
   const [movePotentialTargetCells, setMovePotentialTargetCells] = useState([]);
-  const [gameState, setGameState] = useState(new GameModel());
+  const [gameState, _setGameState] = useState(new GameModel());
   const [evalResult, setEvalResult] = useState({});
   const [aiResult, setAiResult] = useState();
   const [aiMovesResult, setAiMovesResult] = useState([]);
@@ -59,6 +61,29 @@ export const DumbBoard = () => {
   const [highlightsFor, setHighlightsFor] = useState('None');
   const [moveToHighlighted, setMoveToHighlighted] = useState(false);
   const [allModelNames, setAllModelNames] = useState([]);
+  const [fenHistory, setFenHistory] = useState([]);
+  const [currentFenIndex, setCurrentFenIndex] = useState(0);
+
+  const setGameState = (game, dontAdd) => {
+    if (dontAdd) return _setGameState(game);
+
+    const newFenHistory = [...fenHistory, board2fen(game.board)];
+    setFenHistory(newFenHistory);
+    setCurrentFenIndex(newFenHistory.length - 1);
+    _setGameState(game);
+  };
+
+  const goBack = () => {
+    const newFenIndex = Math.max(0, currentFenIndex - 1);
+    setCurrentFenIndex(newFenIndex);
+    setGameState(new GameModel({ fen: fenHistory[newFenIndex] }), true);
+  };
+
+  const goForward = () => {
+    const newFenIndex = Math.min(fenHistory.length - 1, currentFenIndex + 1);
+    setCurrentFenIndex(newFenIndex);
+    setGameState(new GameModel({ fen: fenHistory[newFenIndex] }), true);
+  };
 
   const { board, nextMoves, bitBoard: _bitBoard } = gameState;
 
@@ -108,11 +133,11 @@ export const DumbBoard = () => {
         ))}
       </table>,
     );
-    console.log({ moveToHighlighted });
+    // console.log({ moveToHighlighted });
     if (moveToHighlighted) {
       const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
       if (winningMove) {
-        console.log('bububu');
+        // console.log('bububu');
         makeMove(moveString2move(winningMove.move));
       }
     }
@@ -269,14 +294,16 @@ export const DumbBoard = () => {
   const evaluateBoard = ({ method = 'localSingleThread' } = {}) =>
     console.log('ai', {
       method,
-      board: gameState.board,
-      moves: gameState.nextMoves,
+      // board: gameState.board,
+      // moves: gameState.nextMoves,
+      game: gameState,
       depth,
     }) ||
     aiWorker.do('ai', {
       method,
-      board: gameState.board,
-      moves: gameState.nextMoves,
+      // board: gameState.board,
+      // moves: gameState.nextMoves,
+      game: gameState,
       depth,
     });
 
@@ -380,12 +407,24 @@ export const DumbBoard = () => {
       <div class={style.rightBar}>
         <div>
           <Formfield>
-            <TextField
-              label="State"
-              value={board2fen(gameState.board)}
-              onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
-              outerStyle={{ 'min-width': '-webkit-fill-available' }}
-            />
+            <div class={style.fenDisplay}>
+              <TextField
+                label="State"
+                value={board2fen(gameState.board)}
+                onChange={(e) => setGameState(new GameModel({ fen: e.target.value }))}
+                outerStyle={{ 'min-width': '-webkit-fill-available' }}
+                trailingIcon={
+                  <div class={style.pagingButtonsWrapper}>
+                    <button class={style.pagingButton} onClick={goBack}>
+                      &lt;
+                    </button>
+                    <button class={style.pagingButton} onClick={goForward}>
+                      &gt;
+                    </button>
+                  </div>
+                }
+              />
+            </div>
           </Formfield>
 
           <Formfield>

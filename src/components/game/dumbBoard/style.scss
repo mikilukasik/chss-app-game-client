@@ -82,6 +82,19 @@
   height: 800px;
 }
 
+.pagingButton {
+  float: left;
+  padding: 0px 5px;
+  background-color: transparent;
+  border: none;
+  font-size: larger;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.pagingButton:hover {
+  font-weight: bolder !important;
+} 
 
 @media (min-width: 530px) {
   .boardContainer {
