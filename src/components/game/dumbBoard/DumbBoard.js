@@ -236,13 +236,13 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
     clearMoveSourceCell();
 
-    setAiResult(
-      (await getPrediction({
-        modelName: _modelName,
-        board: nextGameState.board,
-        repeatedPastFens: nextGameState.repeatedPastFens,
-      })) * 50,
-    );
+    // setAiResult(
+    //   (await getPrediction({
+    //     modelName: _modelName,
+    //     board: nextGameState.board,
+    //     repeatedPastFens: nextGameState.repeatedPastFens,
+    //   })) * 50,
+    // );
 
     updateAiDisplay(nextGameState, true);
 
@@ -291,7 +291,7 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
-  const evaluateBoard = ({ method = 'localSingleThread' } = {}) =>
+  const evaluateBoard = ({ method = 'localMultiThread' } = {}) =>
     console.log('ai', {
       method,
       // board: gameState.board,
