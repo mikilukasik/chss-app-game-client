@@ -11,8 +11,8 @@ const gamesSetterAwaiters = [];
 let _playerSocket;
 const playerSocketAwaiters = [];
 
-let _predictionSocket;
-const predictionSocketAwaiters = [];
+let _engineSocket;
+const engineSocketAwaiters = [];
 
 let _modelStoreSocket;
 const modelStoreSocketAwaiters = [];
@@ -63,15 +63,15 @@ export const usePlayerSocket = (playerSocket) => {
   playerSocketAwaiters.forEach((resolve) => resolve(playerSocket));
 };
 
-export const getPredictionSocket = () =>
+export const getEngineSocket = () =>
   new Promise((resolve) => {
-    if (_predictionSocket) return resolve(_predictionSocket);
-    predictionSocketAwaiters.push(resolve);
+    if (_engineSocket) return resolve(_engineSocket);
+    engineSocketAwaiters.push(resolve);
   });
 
-export const usePredictionSocket = (predictionSocket) => {
-  _predictionSocket = predictionSocket;
-  predictionSocketAwaiters.forEach((resolve) => resolve(predictionSocket));
+export const useEngineSocket = (engineSocket) => {
+  _engineSocket = engineSocket;
+  engineSocketAwaiters.forEach((resolve) => resolve(engineSocket));
 };
 
 export const getModelStoreSocket = () =>

@@ -11,7 +11,7 @@ import { ReplayBoard } from '../replayBoard';
 import {
   getPlayerSocket,
   setCurrentGameState,
-  getPredictionSocket,
+  getEngineSocket,
   getModelStoreSocket,
 } from '../../../services/gamesService';
 import { toNested } from '../../../utils/toNested';
@@ -104,8 +104,8 @@ export const DumbBoard = () => {
   };
 
   const updateAiDisplayOneHotMethod = async ({ nextGameState, modelName = 'oneHot' }) => {
-    const predictionSocket = await getPredictionSocket();
-    const response = await predictionSocket.do('predictMove', { game: nextGameState, modelName });
+    const engineSocket = await getEngineSocket();
+    const response = await engineSocket.do('predictMove', { game: nextGameState, modelName });
 
     const sortedMoves = Object.keys(response.moveStringValues)
       .map((move, i) => ({ move, val: response.moveStringValues[move] }))
@@ -291,18 +291,16 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
-  const evaluateBoard = ({ method = 'localMultiThread' } = {}) =>
-    console.log('ai', {
-      method,
-      // board: gameState.board,
-      // moves: gameState.nextMoves,
-      game: gameState,
-      depth,
-    }) ||
+  const evaluateBoard = ({ method = 'grid' } = {}) =>
+    // console.log('ai', {
+    //   method,
+    //   // board: gameState.board,
+    //   // moves: gameState.nextMoves,
+    //   game: gameState,
+    //   depth,
+    // }) ||
     aiWorker.do('ai', {
       method,
-      // board: gameState.board,
-      // moves: gameState.nextMoves,
       game: gameState,
       depth,
     });
