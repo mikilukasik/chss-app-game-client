@@ -291,7 +291,8 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
-  const evaluateBoard = ({ method = 'grid' } = {}) =>
+  // const evaluateBoard = ({ method = 'grid' } = {}) =>
+  const evaluateBoard = ({ method = 'localMultiThread' } = {}) =>
     // console.log('ai', {
     //   method,
     //   // board: gameState.board,
