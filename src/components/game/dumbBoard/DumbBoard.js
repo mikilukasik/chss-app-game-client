@@ -42,6 +42,8 @@ import { aiWorker } from '../../workerFrame';
 const _modelName = 'champion';
 const _movesModelName = 'moves_0.02679-e1-1652876197395';
 
+const aiMethods = ['localSingleThread', 'localMultiThread', 'grid'];
+
 /* debug */ let started;
 
 export const DumbBoard = () => {
@@ -59,6 +61,7 @@ export const DumbBoard = () => {
   const [depth, setDepth] = useState(5);
   const [highlightMethod, setHighlightMethod] = useState('Inc');
   const [highlightsFor, setHighlightsFor] = useState('None');
+  const [aiMethod, setAiMethod] = useState('grid');
   const [moveToHighlighted, setMoveToHighlighted] = useState(false);
   const [allModelNames, setAllModelNames] = useState([]);
   const [fenHistory, setFenHistory] = useState([]);
@@ -249,16 +252,10 @@ export const DumbBoard = () => {
     if ((keepMovingBlack && !nextGameState.board[64]) || (keepMovingWhite && nextGameState.board[64])) {
       setEvalResult({});
 
-      console.log('hello1');
-      const { move: nextMove } = await evaluateBoard();
-      console.log('hello2');
+      const { move: nextMove } = await evaluateBoard({ method: aiMethod });
 
       setTimeout(() => {
-        console.log('hello3', nextMove);
-
         makeMove(nextMove);
-        console.log('hello4');
-
         setEvalResult(nextMove);
       }, 50);
     }
@@ -291,15 +288,7 @@ export const DumbBoard = () => {
     setGameState(nextGameState);
   };
 
-  // const evaluateBoard = ({ method = 'grid' } = {}) =>
-  const evaluateBoard = ({ method = 'localMultiThread' } = {}) =>
-    // console.log('ai', {
-    //   method,
-    //   // board: gameState.board,
-    //   // moves: gameState.nextMoves,
-    //   game: gameState,
-    //   depth,
-    // }) ||
+  const evaluateBoard = ({ method } = {}) =>
     aiWorker.do('ai', {
       method,
       game: gameState,
@@ -427,6 +416,18 @@ export const DumbBoard = () => {
           </Formfield>
 
           <Formfield>
+            <Select
+              onChange={(e) => setAiMethod(e.target.value)}
+              selectedIndex={aiMethods.indexOf(aiMethod) + 1}
+              hintText="AI method"
+            >
+              {aiMethods.map((option) => (
+                <SelectOption value={option}>{option}</SelectOption>
+              ))}
+            </Select>
+          </Formfield>
+
+          <Formfield>
             <Checkbox
               id="auto-move-checkboxw"
               size="small"
@@ -488,7 +489,7 @@ export const DumbBoard = () => {
             <Button
               onClick={async () => {
                 setEvalResult({});
-                const result = await evaluateBoard();
+                const result = await evaluateBoard({ method: aiMethod });
                 setEvalResult(result);
               }}
             >
