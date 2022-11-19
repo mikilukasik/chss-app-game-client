@@ -58,7 +58,7 @@ export const DumbBoard = () => {
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
   const [keepMovingWhite, setKeepMovingWhite] = useState(false);
   const [keepMovingBlack, setKeepMovingBlack] = useState(false);
-  const [depth, setDepth] = useState(5);
+  const [depth, setDepth] = useState(6);
   const [highlightMethod, setHighlightMethod] = useState('Inc');
   const [highlightsFor, setHighlightsFor] = useState('None');
   const [aiMethod, setAiMethod] = useState('grid');
