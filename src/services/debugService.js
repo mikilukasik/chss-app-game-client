@@ -9,8 +9,7 @@ import { fen2intArray } from '../../../chss-service-game-handler/chss-module-eng
 import { generateLegalMoves } from '../../chss-module-engine/src/engine_new/moveGenerators/generateLegalMoves';
 import { perfTestFens } from './debugHelpers/perftTestFens';
 import { getCurrentGameState, getCurrentGameUpdater, getPlayerSocket, startCustomGame } from './gamesService';
-
-move2moveString;
+import { getUser } from './userService';
 
 export const perft = (depth = 5, fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') => {
   const chssEncodedMoves = generateLegalMoves(fen2intArray(fen));
@@ -65,8 +64,10 @@ export const debugService = async () => {
   //     .then(console.log, console.error);
   // };
 
-  const displayBoard = (board) => {
-    currentGameUpdater(new GameModel({ board }));
+  const displayBoard = async (board) => {
+    const user = await getUser();
+    const userId = user?.userId ?? null;
+    currentGameUpdater(new GameModel({ board, wPlayer: userId, bPlayer: userId }));
   };
 
   const getFen = () => {
