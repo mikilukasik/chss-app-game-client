@@ -12,6 +12,7 @@ import { getPlayerSocket, setCurrentGameState } from '../../../services/gamesSer
 import { toNested } from '../../../utils/toNested';
 import { move2moveString } from '../../../../../chss-module-engine/src/engine_new/transformers/move2moveString';
 import { getPieceBalance } from '../../../../chss-module-engine/src/engine_new/evaluators/evaluateBoard';
+import { askPromotionChoice, PromotionChooser } from '../promotionChooser/PromotionChooser';
 
 /* debug */ let started;
 
@@ -146,6 +147,7 @@ export const Board = () => {
 
   return (
     <div>
+      <PromotionChooser />
       <ProgressBar progress={{ total: progressTotal, completed: progressCompleted }} />
       <div className={style.boardContainer}>
         <div className={style.boardRow}>
@@ -180,15 +182,19 @@ export const Board = () => {
                 e.preventDefault();
               };
 
-              const moveToThisCell = () => {
-                // TODO: deal with underpromotion here
-                const move = (moveSourceCell << 10) + cellIndex;
+              const moveToThisCell = async (e) => {
+                const isPawnPromotion = (board[moveSourceCell] & 7) === 1 && [0, 7].includes(Math.floor(cellIndex / 8));
+
+                let promotionPiece = 0;
+                if (isPawnPromotion) promotionPiece = await askPromotionChoice(Math.floor(cellIndex / 8) === 0);
+
+                const move = (moveSourceCell << 10) + (promotionPiece << 6) + cellIndex;
                 makeMove(move);
               };
 
               const onDrop = isPotentialTarget ? moveToThisCell : () => {};
 
-              const cellClickHandler = () => {
+              const cellClickHandler = (e) => {
                 if (moveSourceCell === cellIndex) {
                   clearMoveSourceCell();
                   return;
@@ -200,7 +206,7 @@ export const Board = () => {
                 }
 
                 if (movePotentialTargetCells.includes(cellIndex)) {
-                  moveToThisCell();
+                  moveToThisCell(e);
                   return;
                 }
               };
