@@ -79,8 +79,6 @@ export const debugService = async () => {
     displayBoard(fen2intArray(fen));
   };
 
-  const startCustomGame = startCustomGame;
-
   window.CHSS = Object.assign(window.CHSS || {}, {
     perft,
     perftTest,
