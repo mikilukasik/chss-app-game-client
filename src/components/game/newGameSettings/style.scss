@@ -1,0 +1,19 @@
+.promotionChooser {
+	width: fit-content;
+}
+
+.promotionContainer {
+	width: fit-content;
+	:first-child {
+		min-width: fit-content
+	}
+}
+
+.promotionItem {
+	display: inline-block;
+
+	img {
+		width: 100px;
+		height: 100px;
+	}
+}
