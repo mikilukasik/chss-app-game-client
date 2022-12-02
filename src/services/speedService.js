@@ -8,5 +8,5 @@ export const measureClientSpeed = () => {
   const finishAt = Date.now() + SPEED_TEST_LENGTH;
   let count = 0;
   while (Date.now() < finishAt) count += 1;
-  return count * getHardwareConcurrency();
+  return count; // * getHardwareConcurrency();
 };

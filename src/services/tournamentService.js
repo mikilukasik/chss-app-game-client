@@ -346,6 +346,7 @@ export const startTournament = async ({
   rounds,
   displayedGameUpdater = () => {},
   displayedStatsUpdater = () => {},
+  fenSetName,
 }) => {
   const tournamentSocket = await getTournamentSocket();
 
@@ -358,7 +359,7 @@ export const startTournament = async ({
 
   const updateTournamentStats = async (game) => tournamentSocket.do('tournamentGameFinished', game);
 
-  const { games } = await tournamentSocket.do('startTournament');
+  const { games } = await tournamentSocket.do('startTournament', { fenSetName });
   const totalGames = games.length;
   // console.log({ games });
   while (games.length) {

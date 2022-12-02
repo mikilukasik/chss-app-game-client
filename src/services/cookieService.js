@@ -8,7 +8,7 @@ const getCookie = (name) => {
   if (parts.length === 2) return parts[1].split(';')[0];
 };
 
-export const ensureCookies = async() => {
+export const ensureCookies = async () => {
   ensureClientIdCookie();
   await ensureClientSpeedCookie();
 };
@@ -20,9 +20,9 @@ export const ensureClientIdCookie = () => {
   document.cookie = `CHSS_CLIENT_ID=${uuid()}; path=/`;
 };
 
-export const ensureClientSpeedCookie = async() => {
+export const ensureClientSpeedCookie = async () => {
   if (typeof document === 'undefined') return;
 
-  if (getCookie('CHSS_CLIENT_SPEED')) return;
-  document.cookie = `CHSS_CLIENT_SPEED=${await measureClientSpeed()}; path=/`;
+  if (getCookie('CHSS_CLIENT_SPEED_V2')) return;
+  document.cookie = `CHSS_CLIENT_SPEED_V2=${await measureClientSpeed()}; path=/`;
 };
