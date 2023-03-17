@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import style from './style.scss';
 
-import { useContext, useEffect, useState, useCallback } from 'preact/hooks';
+import { useContext, useEffect, useState, useCallback, useRef } from 'preact/hooks';
 import GameContext from '../../../context/GameContext';
 import { moveInBoard, moveString2move } from '../../../../chss-module-engine/src/engine/engine';
 import { ProgressBar } from '../progressBar';
@@ -37,6 +37,7 @@ import Formfield from 'preact-material-components/FormField';
 import { getPrediction } from '../../../../chss-module-engine/src/engine_new/tfModels/getPrediction';
 import { getMoveSorter } from '../../../../chss-module-engine/src/engine_new/moveGenerators/getMoveSorter';
 import { aiWorker } from '../../workerFrame';
+import { cellIndex2cellStr } from '../../../../chss-module-engine/src/engine_new/transformers/cellIndex2cellStr';
 // import { getWasmEngine } from '../../../../../chss-module-engine/src/engine_new/utils/wasmEngine';
 
 const _modelName = 'champion';
@@ -46,26 +47,106 @@ const aiMethods = ['localSingleThread', 'localMultiThread', 'grid'];
 
 /* debug */ let started;
 
+// chatgpt
+function clearCanvas() {
+  const canvas = document.getElementById('chessboard-canvas');
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawArrow(startX, startY, endX, endY, color, opacity) {
+  const canvas = document.getElementById('chessboard-canvas');
+  const context = canvas.getContext('2d');
+
+  // set arrow color, opacity, and line width
+  const lineWidth = 20 * opacity;
+
+  context.strokeStyle = color;
+  context.fillStyle = color; // set fill color to match stroke color
+  context.lineWidth = lineWidth;
+
+  context.globalAlpha = opacity;
+
+  // calculate arrow angle and length
+  const angle = Math.atan2(endY - startY, endX - startX);
+  const length = Math.sqrt((endY - startY) ** 2 + (endX - startX) ** 2);
+
+  // draw arrow line
+  context.beginPath();
+  context.moveTo(startX, startY);
+  context.lineTo(endX, endY);
+  context.stroke();
+
+  // calculate x and y components of offset based on arrow direction
+  const offsetX = 2 * lineWidth * Math.cos(angle);
+  const offsetY = 2 * lineWidth * Math.sin(angle);
+
+  context.fillStyle = `rgba(${color}, ${opacity})`;
+
+  // draw arrow head
+  context.save();
+  context.translate(endX + offsetX, endY + offsetY);
+  context.rotate(angle);
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(-lineWidth * 2, -lineWidth * 2);
+  context.lineTo(-lineWidth * 2, lineWidth * 2);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
 export const DumbBoard = () => {
+  const canvasRef = useRef(null);
+
   const [moveSourceCell, setMoveSourceCell] = useState();
   const [movePotentialTargetCells, setMovePotentialTargetCells] = useState([]);
   const [gameState, _setGameState] = useState(new GameModel());
   const [evalResult, setEvalResult] = useState({});
   const [aiResult, setAiResult] = useState();
-  const [aiMovesResult, setAiMovesResult] = useState([]);
+  const [aiMovesResult, _setAiMovesResult] = useState([]);
   const [winningMove, setWinningMove] = useState('');
 
   const [freeMovesChecked, setFreeMovesChecked] = useState(false);
   const [keepMovingWhite, setKeepMovingWhite] = useState(false);
   const [keepMovingBlack, setKeepMovingBlack] = useState(false);
   const [depth, setDepth] = useState(6);
-  const [highlightMethod, setHighlightMethod] = useState('Inc');
-  const [highlightsFor, setHighlightsFor] = useState('None');
+  const [highlightMethods, setHighlightMethods] = useState({ black: 'Off', white: 'Off' });
+  const [highlightsFor, setHighlightsFor] = useState('Both');
   const [aiMethod, setAiMethod] = useState('grid');
   const [moveToHighlighted, setMoveToHighlighted] = useState(false);
   const [allModelNames, setAllModelNames] = useState([]);
   const [fenHistory, setFenHistory] = useState([]);
   const [currentFenIndex, setCurrentFenIndex] = useState(0);
+
+  const setAiMovesResult = (data) => {
+    _setAiMovesResult(data);
+
+    clearCanvas();
+
+    for (const move of data.slice(0, 35)) {
+      // console.log(66, { move });
+      // const move = data[i];
+
+      const startCellName = 'cell' + move.move.slice(0, 2);
+      const endCellName = 'cell' + move.move.slice(2, 4);
+
+      const startCell = document.getElementById(startCellName);
+      const endCell = document.getElementById(endCellName);
+      const color = move.color;
+      const opacity = move.opacity;
+      // getOpacityForMoveScore(move.score);
+
+      console.log({ startCellName, endCellName, color, opacity });
+
+      const startX = startCell.offsetLeft + startCell.offsetWidth / 2;
+      const startY = startCell.offsetTop + startCell.offsetHeight / 2;
+      const endX = endCell.offsetLeft + endCell.offsetWidth / 2;
+      const endY = endCell.offsetTop + endCell.offsetHeight / 2;
+
+      drawArrow(startX, startY, endX, endY, color, opacity);
+    }
+  };
 
   const setGameState = (game, dontAdd) => {
     if (dontAdd) return _setGameState(game);
@@ -109,38 +190,40 @@ export const DumbBoard = () => {
   const updateAiDisplayOneHotMethod = async ({ nextGameState, modelName = 'oneHot' }) => {
     const engineSocket = await getEngineSocket();
     const response = await engineSocket.do('predictMove', { game: nextGameState, modelName });
+    console.log({ modelName, response });
 
     const sortedMoves = Object.keys(response.moveStringValues)
-      .map((move, i) => ({ move, val: response.moveStringValues[move] }))
+      .map((move, i) => {
+        const val = response.moveStringValues[move];
+        const opacity = Math.max(0, Math.min(1, val));
+
+        return {
+          move,
+          val,
+          opacity,
+          color: gameState.nextMoves.includes(moveString2move(move))
+            ? `#00${Math.floor(opacity * 255)
+                .toString(16)
+                .padStart(2, 0)}00`
+            : `red`,
+        };
+      })
       .sort((a, b) => b.val - a.val);
 
-    setWinningMove(
-      <table>
-        {sortedMoves.slice(0, 50).map(({ move, val }, i) => (
-          <tr>
-            <td
-              style={
-                !gameState.nextMoves.includes(moveString2move(move))
-                  ? { color: 'red' }
-                  : {
-                      color: `#00${Math.floor(Math.max(0, Math.min(1, val)) * 255)
-                        .toString(16)
-                        .padStart(2, 0)}00`,
-                    }
-              }
-            >
-              {move}
-            </td>
-            <td>{val}</td>
-          </tr>
-        ))}
-      </table>,
-    );
+    // console.log({ response });
+
+    // console.log(2323232, Object.values(response.ys));
+    // console.log({ sortedMoves });
+    setAiMovesResult(sortedMoves);
+
+    // setWinningMove(response.winningMoveString);
     // console.log({ moveToHighlighted });
     if (moveToHighlighted) {
       const winningMove = sortedMoves.find(({ move }) => gameState.nextMoves.includes(moveString2move(move)));
+      console.log({ winningMove });
       if (winningMove) {
         // console.log('bububu');
+        await new Promise((r) => setTimeout(r, 100));
         makeMove(moveString2move(winningMove.move));
       }
     }
@@ -171,9 +254,14 @@ export const DumbBoard = () => {
     //   .catch((e) => {
     //     console.error('itten', e);
     //   });
+    const canvas = canvasRef.current;
+    const chessboard = document.querySelector('#dumbBoardContainer');
+    canvas.width = chessboard.offsetWidth;
+    canvas.height = chessboard.offsetHeight;
   }, []);
 
   const aiDisplayHandlers = {
+    // Python: null,
     Legacy: updateAiDisplayOldMethod,
     Off: clearHighlights,
   };
@@ -190,15 +278,16 @@ export const DumbBoard = () => {
     const { wNext } = gameState;
     if ((wNext && white) || (!wNext && black))
       return (
-        aiDisplayHandlers[highlightMethod] ||
-        (({ nextGameState }) => updateAiDisplayOneHotMethod({ nextGameState, modelName: highlightMethod }))
+        aiDisplayHandlers[highlightMethods[wNext ? 'white' : 'black']] ||
+        (({ nextGameState }) =>
+          updateAiDisplayOneHotMethod({ nextGameState, modelName: highlightMethods[wNext ? 'white' : 'black'] }))
       )({ nextGameState });
     clearHighlights();
   };
 
   useEffect(() => {
     updateAiDisplay(gameState);
-  }, [highlightMethod]);
+  }, [highlightMethods]);
 
   const nestedBoard = toNested(board);
 
@@ -296,8 +385,21 @@ export const DumbBoard = () => {
     });
 
   return (
-    <div className={style.dumbBoardContainer}>
+    <div className={style.dumbBoardContainer} id="dumbBoardContainer" style={{ position: 'relative' }}>
       {/* <ProgressBar progress={{ total: progressTotal, completed: progressCompleted }} /> */}
+
+      <canvas
+        id="chessboard-canvas"
+        ref={canvasRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      />
+
       <div className={style.boardContainer}>
         <div className={style.boardRow}>
           <div className={style.boardHeadingCell}> </div>
@@ -359,15 +461,23 @@ export const DumbBoard = () => {
                 moveSourceCell === cellIndex || (isPotentialTarget && !freeMovesChecked) ? style.selected : '';
 
               const getColorFromIndex = (index) => {
-                return Math.round(Math.max(0, Math.min(255, aiMovesResult[index] * 256)))
+                return Math.round(
+                  Math.max(
+                    0,
+                    Math.min(
+                      255,
+                      aiMovesResult[index] * 256,
+                      // aiMovesResult[gameState.wNext ? index : 8 * (7 - Math.floor(index / 8)) + (index % 8)] * 256,
+                    ),
+                  ),
+                )
                   .toString(16)
                   .padStart(2, '0');
               };
 
+              const ri = gameState.wNext ? rowIndex : 7 - rowIndex;
               const aiBorder = aiMovesResult.length
-                ? `5px solid #${getColorFromIndex(rowIndex * 8 + colIndex)}00${getColorFromIndex(
-                    rowIndex * 8 + colIndex + 64,
-                  )}`
+                ? `5px solid #${getColorFromIndex(ri * 8 + colIndex)}00${getColorFromIndex(ri * 8 + colIndex + 64)}`
                 : 'none';
 
               return (
@@ -375,6 +485,7 @@ export const DumbBoard = () => {
                   key={colIndex}
                   className={(rowIndex + colIndex) & 1 ? style.darker : style.square}
                   style={{ border: aiBorder }}
+                  id={`cell${cellIndex2cellStr(cellIndex)}`}
                 >
                   <div onDragOver={onDragOver} onDrop={onDrop} onClick={cellClickHandler}>
                     <img
@@ -518,9 +629,23 @@ export const DumbBoard = () => {
 
             <Formfield>
               <Select
-                onChange={(e) => setHighlightMethod(e.target.value)}
-                selectedIndex={Object.keys(aiDisplayHandlers).concat(allModelNames).indexOf(highlightMethod) + 1}
-                hintText="Highlight hints"
+                onChange={(e) => setHighlightMethods({ black: highlightMethods.black, white: e.target.value })}
+                selectedIndex={Object.keys(aiDisplayHandlers).concat(allModelNames).indexOf(highlightMethods.white) + 1}
+                hintText="Hints for white"
+              >
+                {Object.keys(aiDisplayHandlers)
+                  .concat(allModelNames)
+                  .map((option) => (
+                    <SelectOption value={option}>{option}</SelectOption>
+                  ))}
+              </Select>
+            </Formfield>
+
+            <Formfield>
+              <Select
+                onChange={(e) => setHighlightMethods({ white: highlightMethods.white, black: e.target.value })}
+                selectedIndex={Object.keys(aiDisplayHandlers).concat(allModelNames).indexOf(highlightMethods.black) + 1}
+                hintText="Hints for black"
               >
                 {Object.keys(aiDisplayHandlers)
                   .concat(allModelNames)
@@ -551,6 +676,15 @@ export const DumbBoard = () => {
             </div>
 
             {winningMove}
+
+            <table>
+              {(aiMovesResult || []).slice(0, 50).map(({ move, val, color }) => (
+                <tr>
+                  <td style={{ color }}>{move}</td>
+                  <td>{val}</td>
+                </tr>
+              ))}
+            </table>
           </div>
         </div>
       </div>

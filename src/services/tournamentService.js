@@ -200,7 +200,7 @@ const makeMove = async ({ game, modelName, randomValue = 0 }) => {
   // );
 
   // const moveindex = wNext ? indexOfMaxValue(predictions) : indexOfMinValue(predictions);
-
+  // console.log(`Tensors in memory: ${tf.memory().numTensors}`);
   const { moveValues } = await getPrediction({ game, modelName });
   const sortedMoves = nextMoves.sort((a, b) => moveValues[b] - moveValues[a]);
   // console.log({ s: sortedMoves.map(move2moveString) });
@@ -247,7 +247,7 @@ const autoPlayTournamentGame = async ({
   randomValue,
 }) => {
   let thisGame = Object.assign({}, game);
-  console.log('started', thisGame.wName, thisGame.bName);
+  // console.log('started', thisGame.wName, thisGame.bName);
   const move = async () => {
     const { nextGameState, finished } = await makeMove({
       randomValue,
@@ -365,6 +365,8 @@ export const startTournament = async ({
   while (games.length) {
     const game = games.pop();
 
+    tf.engine().startScope();
+
     await autoPlayTournamentGame({
       game,
       rounds,
@@ -377,6 +379,8 @@ export const startTournament = async ({
       totalGames,
       currentGame: totalGames - games.length + 1,
     });
+
+    tf.engine().endScope();
 
     // await new Promise((r) => setTimeout(r, 200));
     // if (games.length % 10 === 0) await new Promise((r) => setTimeout(r, 3000));
